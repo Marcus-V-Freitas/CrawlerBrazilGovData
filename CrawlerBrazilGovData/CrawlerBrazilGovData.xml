@@ -1,0 +1,15 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>CrawlerBrazilGovData</name>
+    </assembly>
+    <members>
+        <member name="M:CrawlerBrazilGovData.Controllers.ExtractUrlsController.ExtractUrlsBySearch(System.String)">
+             <summary>
+            
+             </summary>
+             <param name="search"></param>
+             <returns></returns>
+        </member>
+    </members>
+</doc>
