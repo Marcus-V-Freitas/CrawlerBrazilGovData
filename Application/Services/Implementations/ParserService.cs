@@ -33,12 +33,21 @@ namespace Application.Services.Implementations
         public async Task<List<Dataset>> ParserUrlToDataset(List<UrlExtracted> urls)
         {
             List<Dataset> datasets = new();
-            foreach (UrlExtracted url in urls)
+
+            if (urls != null && urls.Any())
             {
-                string html = await _client.GetResponseHtmlAsync(url.Url);
-                Dataset dataset = await ExtractGeneralInfo(html);
-                if (dataset != null)
-                    datasets.Add(dataset);
+                foreach (UrlExtracted url in urls)
+                {
+                    string html = await _client.GetResponseHtmlAsync(url.Url);
+                    if (!string.IsNullOrEmpty(html))
+                    {
+                        Dataset dataset = await ExtractGeneralInfo(html);
+                        if (dataset != null)
+                        {
+                            datasets.Add(dataset);
+                        }
+                    }
+                }
             }
             return datasets;
         }
@@ -58,16 +67,19 @@ namespace Application.Services.Implementations
             List<string> urls = html.ExtractListInfoAttributes(".//div[@id='content']//article[@class='module']//ul[@class='resource-list']/li[@class='resource-item']//a[@class='heading']", "href", false);
             List<DataSource> dataSources = new();
 
-            if (titles.Count() == urls.Count())
+            if (titles !=null && urls !=null && titles.Count() == urls.Count())
             {
                 foreach (int indice in Enumerable.Range(0, titles.Count))
                 {
                     string url = _baseUrlGov.CombineUrl(urls[indice]);
                     var addionalInformation = await ExtractDatasourceAddionalInformation(url);
 
-                    DataSource dataSource = new(titles[indice], url, dataset.Title, addionalInformation.Id, dataset.Id);
-                    var dataSourceInserted = await _dataSourceRepository.InsertAsync(dataSource);
-                    dataSources.Add(dataSourceInserted);
+                    if (addionalInformation != null)
+                    {
+                        DataSource dataSource = new(titles[indice], url, dataset.Title, addionalInformation.Id, dataset.Id);
+                        var dataSourceInserted = await _dataSourceRepository.InsertAsync(dataSource);
+                        dataSources.Add(dataSourceInserted);
+                    }
                 }
             }
             return dataSources;
@@ -78,14 +90,17 @@ namespace Application.Services.Implementations
             List<string> tagsName = html.ExtractListInfo(".//div[@id='content']//section[@class='tags']/ul[@class='tag-list well']/li/a[@class='tag']");
             List<Tag> tags = new();
 
-            foreach (string tagName in tagsName)
+            if (tagsName != null && tagsName.Any())
             {
-                Tag tag = new(tagName, datasetId);
-                Tag tagInserted = await _tagRepository.InsertAsync(tag);
-
-                if (tagInserted != null)
+                foreach (string tagName in tagsName)
                 {
-                    tags.Add(tagInserted);
+                    Tag tag = new(tagName, datasetId);
+                    Tag tagInserted = await _tagRepository.InsertAsync(tag);
+
+                    if (tagInserted != null)
+                    {
+                        tags.Add(tagInserted);
+                    }
                 }
             }
             return tags;
@@ -97,7 +112,7 @@ namespace Application.Services.Implementations
             string description = html.ExtractSingleInfo(".//div[@id='content']//div[@class='notes embedded-content']//p");
             string license = html.ExtractSingleInfo(".//div[@id='content']//section[@class='module module-narrow module-shallow license']/p[@class='module-content']/a");
             string organization = html.ExtractSingleInfo(".//div[@id='content']//div[@class='module module-narrow module-shallow context-info']/section[@class='module-content']/p");
-            int followers = Convert.ToInt32(html.ExtractSingleInfo(".//div[@id='content']//div[@class='module-content']/div[@class='nums']/dl/dd/span"));
+            int followers = html.ExtractSingleInfo(".//div[@id='content']//div[@class='module-content']/div[@class='nums']/dl/dd/span").TryConvertStringToInt();
 
             Dataset dataset = new(title, description, followers, organization, license, aditionalInformationId);
             Dataset datasetInserted = await _datasetRepository.InsertAsync(dataset);
@@ -107,54 +122,55 @@ namespace Application.Services.Implementations
 
         private async Task<DataSourceAditionalInformation> ExtractDatasourceAddionalInformation(string url)
         {
+            DataSourceAditionalInformation aditionalInformationInserted = new();
             string html = await _client.GetResponseHtmlAsync(url);
-            Dictionary<string, string> extracted = html.ExtractTableInfo(".//div[@id='content']//div[@class='module-content']/table");
 
-            DataSourceAditionalInformation aditionalInformation = new();
+            if (!string.IsNullOrEmpty(html))
+            {
+                Dictionary<string, string> extracted = html.ExtractTableInfo(".//div[@id='content']//div[@class='module-content']/table");
 
-            var aditionalInformationInserted = await _dataSourceAditionalInformation.InsertAsync(aditionalInformation);
+                if (extracted.Any())
+                {
+                    DateTime? lastUpdate = extracted.GetValueByKey("ÚLTIMA ATUALIZAÇÃO").TryConvertDatetime("MMMM d, yyyy", "pt-BR");
+                    DateTime? creationDate = extracted.GetValueByKey("CRIADO").TryConvertDatetime("MMMM d, yyyy", "pt-BR");
+                    string format = extracted.GetValueByKey("FORMATO");
+                    string license = extracted.GetValueByKey("LICENÇA");
+                    string created = extracted.GetValueByKey("CREATED");
+                    bool hasViews = extracted.GetValueByKey("HAS VIEWS").TryConvertStringToBool();
+                    string internalId = extracted.GetValueByKey("ID");
+                    string lastModified = extracted.GetValueByKey("LAST MODIFIED");
+                    bool onSameDomain = extracted.GetValueByKey("ON SAME DOMAIN").TryConvertStringToBool();
+                    string packageId = extracted.GetValueByKey("PACKAGE ID");
+                    string revisionId = extracted.GetValueByKey("REVISION ID");
+                    string state = extracted.GetValueByKey("STATE");
+                    string urlType = extracted.GetValueByKey("URL TYPE");
 
+                    DataSourceAditionalInformation aditionalInformation = new(lastUpdate, creationDate, format, license,
+                                                                              created, hasViews, internalId, lastModified,
+                                                                              onSameDomain, packageId, revisionId, state, urlType);
+
+                    aditionalInformationInserted = await _dataSourceAditionalInformation.InsertAsync(aditionalInformation);
+                }
+            }
             return aditionalInformationInserted;
         }
 
         private async Task<DatasetAditionalInformation> ExtractDatasetAddionalInformation(string html)
         {
+            DatasetAditionalInformation aditionalInformationInserted = new();
             Dictionary<string, string> extracted = html.ExtractTableInfo(".//div[@id='content']//table[@class='table table-striped table-bordered table-condensed']");
 
-            string source = string.Empty;
-            string manager = string.Empty;
-            DateTime? lastUpdate = null;
-            DateTime? creationDate = null;
-            string updateFrequency = string.Empty;
-
-            foreach (KeyValuePair<string, string> item in extracted)
+            if (extracted.Any())
             {
-                switch (item.Key)
-                {
-                    case "FONTE":
-                        source = item.Value;
-                        break;
+                string source = extracted.GetValueByKey("FONTE");
+                string manager = extracted.GetValueByKey("AUTOR");
+                DateTime? lastUpdate = extracted.GetValueByKey("ÚLTIMA ATUALIZAÇÃO").TryConvertDatetime("MMMM d, yyyy, HH:mm", "pt-BR");
+                DateTime? creationDate = extracted.GetValueByKey("CRIADO").TryConvertDatetime("MMMM d, yyyy, HH:mm", "pt-BR");
+                string updateFrequency = extracted.GetValueByKey("PERIODICIDADE DE ATUALIZAÇÃO");
 
-                    case "AUTOR":
-                        manager = item.Value;
-                        break;
-
-                    case "ÚLTIMA ATUALIZAÇÃO":
-                        lastUpdate = item.Value.TryConvertDatetime("MMMM d, yyyy, HH:mm", "pt-BR");
-                        break;
-
-                    case "CRIADO":
-                        creationDate = item.Value.TryConvertDatetime("MMMM d, yyyy, HH:mm", "pt-BR");
-                        break;
-
-                    case "PERIODICIDADE DE ATUALIZAÇÃO":
-                        updateFrequency = item.Value;
-                        break;
-                }
+                DatasetAditionalInformation aditionalInformation = new(source, manager, lastUpdate, creationDate, updateFrequency);
+                aditionalInformationInserted = await _datasetAditionalInformation.InsertAsync(aditionalInformation);
             }
-            DatasetAditionalInformation aditionalInformation = new(source, manager, lastUpdate, creationDate, updateFrequency);
-            DatasetAditionalInformation aditionalInformationInserted = await _datasetAditionalInformation.InsertAsync(aditionalInformation);
-
             return aditionalInformationInserted;
         }
     }

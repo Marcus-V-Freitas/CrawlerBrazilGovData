@@ -15,7 +15,7 @@ namespace IoC.DependencyInjection
                     opt.IncludeXmlComments(xmlPath);
                 }
 
-                opt.SwaggerDoc("v1", new OpenApiInfo { Title = "ArquiteturaLimpaMVC.API", Version = "v1" });
+                opt.SwaggerDoc("v1", new OpenApiInfo { Title = "CrawlerBrazilGovData", Version = "v1" });
                 opt.AddSecurityDefinition("Bearer", new()
                 {
                     Name = "Authorization",

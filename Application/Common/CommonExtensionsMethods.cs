@@ -54,6 +54,14 @@ namespace Application.Common
             return doc;
         }
 
+        public static string GetValueByKey(this Dictionary<string,string> dictionary, string key)
+        {
+            dictionary.TryGetValue(key, out string value);
+            return value;
+        }
+
+       
+
         public static Dictionary<string, string> ExtractTableInfo(this string html, string nodeXPath, bool normalize = true)
         {
             Dictionary<string, string> extracted = new Dictionary<string, string>();
@@ -96,6 +104,17 @@ namespace Application.Common
             }
 
             return string.Empty;
+        }
+
+        public static bool TryConvertStringToBool(this string value)
+        {
+            return value == "1";
+        }
+
+        public static int TryConvertStringToInt(this string value)
+        {
+            int.TryParse(value, out int result);
+            return result;
         }
 
         public static DateTime? TryConvertDatetime(this string value, string format = "dd/MM/yyyy", string culture = "")
