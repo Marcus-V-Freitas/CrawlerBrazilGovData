@@ -3,8 +3,10 @@ using Application.Services.Interfaces;
 using Core.Utils;
 using Domain.Entities;
 using Domain.Interfaces;
+using Microsoft.AspNetCore.Hosting;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Net.Http;
 using System.Threading.Tasks;
@@ -14,13 +16,14 @@ namespace Application.Services.Implementations
     public class ParserService : GovDataUtils, IParserService
     {
         private readonly HttpClient _client;
+        private readonly IHostingEnvironment _hostingEnvironment;
         private readonly IDatasetRepository _datasetRepository;
         private readonly IDataSourceRepository _dataSourceRepository;
         private readonly ITagRepository _tagRepository;
         private readonly IDatasetAditionalInformationRepository _datasetAditionalInformation;
         private readonly IDataSourceAditionalInformationRepository _dataSourceAditionalInformation;
 
-        public ParserService(IDatasetRepository datasetRepository, HttpClient client, IDatasetAditionalInformationRepository datasetAditionalInformation, ITagRepository tagRepository, IDataSourceAditionalInformationRepository dataSourceAditionalInformation, IDataSourceRepository dataSourceRepository)
+        public ParserService(IDatasetRepository datasetRepository, HttpClient client, IDatasetAditionalInformationRepository datasetAditionalInformation, ITagRepository tagRepository, IDataSourceAditionalInformationRepository dataSourceAditionalInformation, IDataSourceRepository dataSourceRepository, IHostingEnvironment hostingEnvironment)
         {
             _client = client;
             _datasetRepository = datasetRepository;
@@ -28,6 +31,7 @@ namespace Application.Services.Implementations
             _tagRepository = tagRepository;
             _dataSourceAditionalInformation = dataSourceAditionalInformation;
             _dataSourceRepository = dataSourceRepository;
+            _hostingEnvironment = hostingEnvironment;
         }
 
         public async Task<List<Dataset>> ParserUrlToDataset(List<UrlExtracted> urls)
@@ -67,16 +71,17 @@ namespace Application.Services.Implementations
             List<string> urls = html.ExtractListInfoAttributes(".//div[@id='content']//article[@class='module']//ul[@class='resource-list']/li[@class='resource-item']//a[@class='heading']", "href", false);
             List<DataSource> dataSources = new();
 
-            if (titles !=null && urls !=null && titles.Count() == urls.Count())
+            if (titles != null && urls != null && titles.Count() == urls.Count())
             {
                 foreach (int indice in Enumerable.Range(0, titles.Count))
                 {
-                    string url = _baseUrlGov.CombineUrl(urls[indice]);
-                    var addionalInformation = await ExtractDatasourceAddionalInformation(url);
+                    string urlHtml = _baseUrlGov.CombineUrl(urls[indice]);
+                    var addionalInformation = await ExtractDatasourceAddionalInformation(urlHtml);
 
                     if (addionalInformation != null)
                     {
-                        DataSource dataSource = new(titles[indice], url, dataset.Title, addionalInformation.Id, dataset.Id);
+                        string downloadPath = DownloadDataSourceDocument(addionalInformation.UrlFile);
+                        DataSource dataSource = new(titles[indice], urlHtml, downloadPath, addionalInformation.Id, dataset.Id);
                         var dataSourceInserted = await _dataSourceRepository.InsertAsync(dataSource);
                         dataSources.Add(dataSourceInserted);
                     }
@@ -127,6 +132,7 @@ namespace Application.Services.Implementations
 
             if (!string.IsNullOrEmpty(html))
             {
+                string urlFile = html.ExtractSingleInfoAttribute("//div[@id='content']//div[@class='module-content']/p[@class='muted ellipsis']/a", "href",false);
                 Dictionary<string, string> extracted = html.ExtractTableInfo(".//div[@id='content']//div[@class='module-content']/table");
 
                 if (extracted.Any())
@@ -145,7 +151,7 @@ namespace Application.Services.Implementations
                     string state = extracted.GetValueByKey("STATE");
                     string urlType = extracted.GetValueByKey("URL TYPE");
 
-                    DataSourceAditionalInformation aditionalInformation = new(lastUpdate, creationDate, format, license,
+                    DataSourceAditionalInformation aditionalInformation = new(urlFile, lastUpdate, creationDate, format, license,
                                                                               created, hasViews, internalId, lastModified,
                                                                               onSameDomain, packageId, revisionId, state, urlType);
 
@@ -153,6 +159,16 @@ namespace Application.Services.Implementations
                 }
             }
             return aditionalInformationInserted;
+        }
+
+        private string DownloadDataSourceDocument(string url)
+        {
+            string downloadPath = string.Empty;
+            if (!string.IsNullOrEmpty(url))
+            {
+                downloadPath = url.DownloadFilesFromUrl(Path.Combine(_hostingEnvironment.WebRootPath, "Files"), true);
+            }
+            return downloadPath;
         }
 
         private async Task<DatasetAditionalInformation> ExtractDatasetAddionalInformation(string html)

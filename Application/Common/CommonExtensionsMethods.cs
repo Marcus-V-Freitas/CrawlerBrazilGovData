@@ -21,27 +21,39 @@ namespace Application.Common
             Uri newUri;
 
             if (Uri.TryCreate(baseUri.Uri, relativeUrl, out newUri))
+            {
                 return newUri.ToString();
+            }
             else
+            {
                 throw new ArgumentException("Unable to combine specified url values");
+            }
         }
 
-        public static string NormalizeHtml(this string text)
+        public static string NormalizeString(this string text)
         {
             return Regex.Replace(text, @"\r\n?|\n|[ ]{2,}", "").ToUpper().Replace("LER MAIS", string.Empty).Trim();
         }
 
         public static async Task<string> GetResponseHtmlAsync(this HttpClient httpClient, string url)
         {
-            HttpResponseMessage responseMessage = await httpClient.GetAsync(url);
+            try
+            {
+                HttpResponseMessage responseMessage = await httpClient.GetAsync(url);
 
-            if (responseMessage.IsSuccessStatusCode)
-            {
-                return await responseMessage.Content.ReadAsStringAsync();
+                if (responseMessage.IsSuccessStatusCode)
+                {
+                    return await responseMessage.Content.ReadAsStringAsync();
+                }
+                else
+                {
+                    Console.WriteLine($"Error occurred, the status code is: {responseMessage.StatusCode}");
+                    return string.Empty;
+                }
             }
-            else
+            catch (Exception ex)
             {
-                Console.WriteLine($"Error occurred, the status code is: {responseMessage.StatusCode}");
+                Console.WriteLine(ex.Message);
                 return string.Empty;
             }
         }
@@ -50,17 +62,18 @@ namespace Application.Common
         {
             HtmlDocument doc = new HtmlDocument();
             doc.OptionAutoCloseOnEnd = true;
-            doc.LoadHtml(htmlResponse);
+            if (!string.IsNullOrEmpty(htmlResponse))
+            {
+                doc.LoadHtml(htmlResponse);
+            }
             return doc;
         }
 
-        public static string GetValueByKey(this Dictionary<string,string> dictionary, string key)
+        public static string GetValueByKey(this Dictionary<string, string> dictionary, string key)
         {
             dictionary.TryGetValue(key, out string value);
             return value;
         }
-
-       
 
         public static Dictionary<string, string> ExtractTableInfo(this string html, string nodeXPath, bool normalize = true)
         {
@@ -73,20 +86,23 @@ namespace Application.Common
                 var tdNodes = tableNode.SelectNodes(".//td");
 
                 List<string> terms = new List<string>() { "CAMPO", "VALOR" };
-                var fieldsRemove = thNodes.Where(x => terms.Contains(x.InnerText.NormalizeHtml())).ToList();
+                var fieldsRemove = thNodes.Where(x => terms.Contains(x.InnerText.NormalizeString())).ToList();
 
-                foreach (var fieldRemove in fieldsRemove)
+                if (fieldsRemove.Any())
                 {
-                    thNodes.Remove(fieldRemove);
+                    foreach (var fieldRemove in fieldsRemove)
+                    {
+                        thNodes.Remove(fieldRemove);
+                    }
                 }
 
-                if (thNodes.Count() == tdNodes.Count()) 
+                if (thNodes != null && tdNodes != null && thNodes.Count() == tdNodes.Count())
                 {
                     foreach (int indice in Enumerable.Range(0, thNodes.Count))
                     {
                         string key = thNodes[indice].InnerText;
                         string value = tdNodes[indice].InnerText;
-                        extracted.Add(normalize ? key.NormalizeHtml() : key, normalize ? value.NormalizeHtml() : value);
+                        extracted.Add(normalize ? key.NormalizeString() : key, normalize ? value.NormalizeString() : value);
                     }
                 }
             }
@@ -100,7 +116,24 @@ namespace Application.Common
 
             if (node != null)
             {
-                return normalize ? node.InnerText.NormalizeHtml() : node.InnerText;
+                return normalize ? node.InnerText.NormalizeString() : node.InnerText;
+            }
+
+            return string.Empty;
+        }
+
+        public static string ExtractSingleInfoAttribute(this string html, string nodeXPath, string attributeName, bool normalize = true)
+        {
+            HtmlDocument doc = html.CreateHtmlDocument();
+            HtmlNode node = doc.DocumentNode.SelectSingleNode(nodeXPath);
+
+            if (node != null)
+            {
+                string value = node.GetAttributeValue(attributeName, null);
+                if (!string.IsNullOrEmpty(value))
+                {
+                    return normalize ? value.NormalizeString() : value;
+                }
             }
 
             return string.Empty;
@@ -133,7 +166,6 @@ namespace Application.Common
             {
                 return date;
             }
-
             return null;
         }
 
@@ -150,7 +182,7 @@ namespace Application.Common
                     string value = node.GetAttributeValue(attributeName, null);
                     if (!string.IsNullOrEmpty(value))
                     {
-                        infos.Add(normalize ? value.NormalizeHtml() : value);
+                        infos.Add(normalize ? value.NormalizeString() : value);
                     }
                 }
                 return infos;
@@ -168,7 +200,7 @@ namespace Application.Common
             {
                 foreach (var node in nodes)
                 {
-                    infos.Add(normalize ? node.InnerText.NormalizeHtml() : node.InnerText);
+                    infos.Add(normalize ? node.InnerText.NormalizeString() : node.InnerText);
                 }
                 return infos;
             }
@@ -197,16 +229,21 @@ namespace Application.Common
                     webClient.Timeout = 10;
                     string folderType = string.Empty;
                     string filename = url.GetFileNameFromUrl();
+                    string extension = filename.GetExtensionOrDefault(false, false);
 
-                    if (folderTypeFile && string.IsNullOrEmpty(folderType))
-                        folderType = "Others";
+                    if (folderTypeFile)
+                    {
+                        folderType = (string.IsNullOrEmpty(extension) ? "Others" : extension);
+                    }
 
                     CreateDirectoryIfNotExists(Path.Combine(pathSave, folderType));
 
-                    completeDownloadPath = Path.Combine(pathSave, folderType, $"{Guid.NewGuid()}.{folderType}");
+                    completeDownloadPath = Path.Combine(pathSave, folderType, $"{Guid.NewGuid()}.{extension}");
 
                     if (!File.Exists(completeDownloadPath))
+                    {
                         webClient.DownloadFile(url, completeDownloadPath);
+                    }
                 }
             }
             catch (Exception ex)
@@ -215,6 +252,15 @@ namespace Application.Common
                 completeDownloadPath = string.Empty;
             }
             return completeDownloadPath;
+        }
+
+        private static string GetExtensionOrDefault(this string filename, bool dot = true, bool normalize = true)
+        {
+            string extension = Path.GetExtension(filename);
+            extension = dot ? extension : extension.Replace(".", "");
+            extension = normalize ? extension.NormalizeString() : extension;
+
+            return extension;
         }
 
         public static void CreateDirectoryIfNotExists(this string path)

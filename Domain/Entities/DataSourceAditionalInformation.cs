@@ -5,6 +5,7 @@ namespace Domain.Entities
     public class DataSourceAditionalInformation
     {
         public int Id { get; private set; }
+        public string UrlFile { get; private set; }
         public DateTime? LastUpdate { get; private set; }
         public DateTime? CreationDate { get; private set; }
         public string Format { get; private set; }
@@ -23,11 +24,12 @@ namespace Domain.Entities
         {
         }
 
-        public DataSourceAditionalInformation(DateTime? lastUpdate, DateTime? creationDate, string format,
+        public DataSourceAditionalInformation(string urlFile, DateTime? lastUpdate, DateTime? creationDate, string format,
                                               string license, string created, bool hasViews,
                                               string internalId, string lastModified, bool onSameDomain,
                                               string packageId, string revisionId, string state, string urlType)
         {
+            UrlFile = urlFile;
             LastUpdate = lastUpdate;
             CreationDate = creationDate;
             Format = format;

@@ -5,11 +5,18 @@
     </assembly>
     <members>
         <member name="M:CrawlerBrazilGovData.Controllers.ExtractUrlsController.ExtractUrlsBySearch(System.String)">
-             <summary>
-            
-             </summary>
-             <param name="search"></param>
-             <returns></returns>
+            <summary>
+            Extract all url by search term
+            </summary>
+            <param name="search"> search term </param>
+            <returns> Array Urls Found </returns>
+        </member>
+        <member name="M:CrawlerBrazilGovData.Controllers.ParserController.ParserBySearch(System.String)">
+            <summary>
+            Parser all infos extracted in urls by search term
+            </summary>
+            <param name="search"> search term </param>
+            <returns> Array Datasets Parsed </returns>
         </member>
     </members>
 </doc>
