@@ -1,4 +1,5 @@
-﻿using Application.Services.Implementations;
+﻿using Application.Entities.Configuration;
+using Application.Services.Implementations;
 using Application.Services.Interfaces;
 using Data.Context;
 using Data.Repositories;
@@ -38,6 +39,10 @@ namespace IoC.DependencyInjection
             //Services
             services.AddScoped<IExtractUrlsService, ExtractUrlsService>();
             services.AddScoped<IParserService, ParserService>();
+
+            //Options
+            services.Configure<Configs>(configuration.GetSection("Configs"));
+            services.AddOptions();
 
             //Health Check
             services.AddHealthChecks()

@@ -13,7 +13,9 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Core", "Core\Core.csproj", 
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "IoC", "IoC\IoC.csproj", "{9457FEDA-0B77-4A2B-BF6F-40F66C457097}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Application", "Application\Application.csproj", "{D1297012-6005-4514-BCCA-2CC762D7FF8C}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Application", "Application\Application.csproj", "{D1297012-6005-4514-BCCA-2CC762D7FF8C}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AWSHelpers", "AWSHelpers\AWSHelpers.csproj", "{E52262BC-891C-4A0D-A235-70F5912D9FC7}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -71,6 +73,14 @@ Global
 		{D1297012-6005-4514-BCCA-2CC762D7FF8C}.Release|Any CPU.Build.0 = Release|Any CPU
 		{D1297012-6005-4514-BCCA-2CC762D7FF8C}.Release|x86.ActiveCfg = Release|Any CPU
 		{D1297012-6005-4514-BCCA-2CC762D7FF8C}.Release|x86.Build.0 = Release|Any CPU
+		{E52262BC-891C-4A0D-A235-70F5912D9FC7}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E52262BC-891C-4A0D-A235-70F5912D9FC7}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{E52262BC-891C-4A0D-A235-70F5912D9FC7}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{E52262BC-891C-4A0D-A235-70F5912D9FC7}.Debug|x86.Build.0 = Debug|Any CPU
+		{E52262BC-891C-4A0D-A235-70F5912D9FC7}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E52262BC-891C-4A0D-A235-70F5912D9FC7}.Release|Any CPU.Build.0 = Release|Any CPU
+		{E52262BC-891C-4A0D-A235-70F5912D9FC7}.Release|x86.ActiveCfg = Release|Any CPU
+		{E52262BC-891C-4A0D-A235-70F5912D9FC7}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

@@ -27,6 +27,7 @@ namespace CrawlerBrazilGovData
         {
             services.AddInfrastructure(Configuration);
             services.AddInfrastructureSwagger(GetXmlDataAnnotationFilePath());
+            services.AddAWS(Configuration);
 
             services.AddControllers()
                   .AddNewtonsoftJson(x =>
