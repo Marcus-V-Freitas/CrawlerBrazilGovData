@@ -1,4 +1,4 @@
-﻿using Domain.Entities;
+﻿using Application.Entities.DTOs;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
@@ -6,6 +6,6 @@ namespace Application.Services.Interfaces
 {
     public interface IParserService
     {
-        Task<List<Dataset>> ParserUrlToDataset(List<UrlExtracted> urls);
+        Task<List<DatasetDTO>> ParserUrlToDataset(string search);
     }
 }

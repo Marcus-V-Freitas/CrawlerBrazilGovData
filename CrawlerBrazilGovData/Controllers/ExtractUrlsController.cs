@@ -1,5 +1,5 @@
-﻿using Application.Services.Interfaces;
-using Domain.Entities;
+﻿using Application.Entities.DTOs;
+using Application.Services.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 using Swashbuckle.AspNetCore.Annotations;
 using System.Collections.Generic;
@@ -26,7 +26,7 @@ namespace CrawlerBrazilGovData.Controllers
         /// <param name="search"> search term </param>
         /// <returns> Array Urls Found </returns>
         [HttpGet("", Name = nameof(ExtractUrlsBySearch))]
-        [SwaggerResponse((int)HttpStatusCode.OK, Description = "Returns 200", Type = typeof(IEnumerable<UrlExtracted>))]
+        [SwaggerResponse((int)HttpStatusCode.OK, Description = "Returns 200", Type = typeof(IEnumerable<UrlExtractedDTO>))]
         [SwaggerResponse((int)HttpStatusCode.NotFound, Description = "Missing Urls objects")]
         [SwaggerResponse((int)HttpStatusCode.InternalServerError, Description = "Unexpected error")]
         public async Task<IActionResult> ExtractUrlsBySearch([FromQuery] string search)

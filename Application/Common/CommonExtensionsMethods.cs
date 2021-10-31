@@ -58,6 +58,14 @@ namespace Application.Common
             }
         }
 
+        public static void AddRangeIfNotNullOrEmpty<T>(this List<T> source, IEnumerable<T> collection)
+        {
+            if (collection != null && collection.Any())
+            {
+                source.AddRange(collection);
+            }
+        }
+
         public static HtmlDocument CreateHtmlDocument(this string htmlResponse)
         {
             HtmlDocument doc = new HtmlDocument();

@@ -1,6 +1,8 @@
 ﻿using Application.Common;
 using Application.Entities.Configuration;
+using Application.Entities.DTOs;
 using Application.Services.Interfaces;
+using AutoMapper;
 using AWSHelpers.SQS.Interfaces;
 using Core.Utils;
 using Domain.Entities;
@@ -18,22 +20,24 @@ namespace Application.Services.Implementations
 {
     public class ExtractUrlsService : GovDataUtils, IExtractUrlsService
     {
-        private readonly HttpClient _client;
-        private readonly ISQSHelper _SQSHelper;
         private readonly Configs _configs;
+        private readonly HttpClient _client;
+        private readonly IMapper _mapper;
+        private readonly ISQSHelper _SQSHelper;
         private readonly IUrlExtractedRepository _urlExtractedRepository;
 
-        public ExtractUrlsService(IUrlExtractedRepository urlExtractedRepository, HttpClient client, ISQSHelper sQSHelper, IOptions<Configs> options)
+        public ExtractUrlsService(IUrlExtractedRepository urlExtractedRepository, HttpClient client, ISQSHelper sQSHelper, IOptions<Configs> options, IMapper mapper)
         {
             _urlExtractedRepository = urlExtractedRepository;
             _client = client;
             _SQSHelper = sQSHelper;
             _configs = options.Value;
+            _mapper = mapper;
         }
 
-        public async Task<List<UrlExtracted>> ExtractUrlsBySearch(string search)
+        public async Task<List<UrlExtractedDTO>> ExtractUrlsBySearch(string search)
         {
-            List<UrlExtracted> extratedUrls = new();
+            List<UrlExtractedDTO> extratedUrlsDTO = new();
             var htmlResponse = await _client.GetResponseHtmlAsync(string.Format(_baseUrlGov.CombineUrl(_searchDatasets), search));
             HtmlDocument doc = htmlResponse.CreateHtmlDocument();
             HtmlNodeCollection urlNodes = doc.DocumentNode.SelectNodes(".//div[@id='content']//li[@class='dataset-item']//h3[@class='dataset-heading']/a");
@@ -50,21 +54,30 @@ namespace Application.Services.Implementations
 
                 if (urlExtractedInserted != null)
                 {
-                    extratedUrls.Add(urlExtractedInserted);
+                    var extratedUrls = _mapper.Map<UrlExtractedDTO>(urlExtractedInserted);
+                    extratedUrlsDTO.Add(extratedUrls);
                 }
             }
 
-            await SaveSQS(search, extratedUrls);
+            await SaveSQS(search, extratedUrlsDTO);
 
-            return extratedUrls;
+            return extratedUrlsDTO;
         }
 
-        public async Task<List<UrlExtracted>> GetUrlsBySearch(string search)
+        public async Task<List<UrlExtractedDTO>> GetUrlsBySearch(string search)
         {
-            return await _urlExtractedRepository.FindAllAsync(x => x.Search == search);
+            List<UrlExtractedDTO> urlExtractedDTOs = new();
+
+            var extractedUrl = await _urlExtractedRepository.FindAllAsync(x => x.Search == search);
+
+            if (extractedUrl != null)
+            {
+                urlExtractedDTOs = _mapper.Map<List<UrlExtractedDTO>>(extractedUrl);
+            }
+            return urlExtractedDTOs;
         }
 
-        private async Task<string> SaveSQS(string search, List<UrlExtracted> extratedUrls)
+        private async Task<string> SaveSQS(string search, List<UrlExtractedDTO> extratedUrls)
         {
             string messageId = string.Empty;
 

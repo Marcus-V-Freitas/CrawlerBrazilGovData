@@ -1,4 +1,5 @@
 ﻿using Application.Entities.Configuration;
+using Application.Entities.Mappings;
 using Application.Services.Implementations;
 using Application.Services.Interfaces;
 using Data.Context;
@@ -23,6 +24,9 @@ namespace IoC.DependencyInjection
                 options.UseMySql(mySqlConnectionStr, ServerVersion.AutoDetect(mySqlConnectionStr),
                                  mySqlOptionsAction: x => x.MigrationsAssembly(nameof(Data)));
             });
+
+            //AutoMapper
+            services.AddAutoMapper(typeof(DomainMappingProfile));
 
             //Exceptions
             services.AddScoped<HttpClient>();

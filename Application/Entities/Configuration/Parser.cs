@@ -2,7 +2,8 @@
 {
     public class Parser
     {
-        public bool MysqlSave { get; set; }
+        public bool GetUrlsSQS { get; set; }
+        public bool GetUrlsMysql { get; set; }
         public bool SQSSave { get; set; }
     }
 }

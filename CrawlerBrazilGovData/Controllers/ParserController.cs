@@ -1,5 +1,5 @@
-﻿using Application.Services.Interfaces;
-using Domain.Entities;
+﻿using Application.Entities.DTOs;
+using Application.Services.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 using Swashbuckle.AspNetCore.Annotations;
 using System.Collections.Generic;
@@ -13,12 +13,10 @@ namespace CrawlerBrazilGovData.Controllers
     [Produces("application/json")]
     public class ParserController : ControllerBase
     {
-        private readonly IExtractUrlsService _extractUrlsService;
         private readonly IParserService _parserService;
 
-        public ParserController(IExtractUrlsService extractUrlsService, IParserService parserService)
+        public ParserController(IParserService parserService)
         {
-            _extractUrlsService = extractUrlsService;
             _parserService = parserService;
         }
 
@@ -28,18 +26,18 @@ namespace CrawlerBrazilGovData.Controllers
         /// <param name="search"> search term </param>
         /// <returns> Array Datasets Parsed </returns>
         [HttpGet("", Name = nameof(ParserBySearch))]
-        [SwaggerResponse((int)HttpStatusCode.OK, Description = "Returns 200", Type = typeof(IEnumerable<Dataset>))]
+        [SwaggerResponse((int)HttpStatusCode.OK, Description = "Returns 200", Type = typeof(IEnumerable<DatasetDTO>))]
         [SwaggerResponse((int)HttpStatusCode.NotFound, Description = "Missing Datasets objects")]
         [SwaggerResponse((int)HttpStatusCode.InternalServerError, Description = "Unexpected error")]
         public async Task<IActionResult> ParserBySearch([FromQuery] string search)
         {
-            var urls = await _extractUrlsService.GetUrlsBySearch(search);
+            var datasets = await _parserService.ParserUrlToDataset(search);
 
-            if (urls == null)
+            if (datasets == null)
             {
                 return NotFound("No data was found with the current keyword!");
             }
-            return Ok(await _parserService.ParserUrlToDataset(urls));
+            return Ok(datasets);
         }
     }
 }

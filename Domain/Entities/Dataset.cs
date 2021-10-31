@@ -14,7 +14,7 @@ namespace Domain.Entities
 
         public string License { get; private set; }
 
-        public int? AditionalInformationId { get; set; }
+        public int? AditionalInformationId { get; private set; }
 
         public virtual List<Tag> Tags { get; private set; }
 

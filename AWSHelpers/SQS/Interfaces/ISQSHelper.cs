@@ -10,22 +10,28 @@ namespace AWSHelpers.SQS.Interfaces
 
         Task<CreateQueueResponse> CreateQueue(string queueName, string deadLetterQueueUrl = null, string maxReceiveCount = null, string receiveWaitTime = null);
 
-        Task<string> GetQueueArn(string queueUrl);
+        Task<string> GetQueueArn(string queueName);
 
-        Task<GetQueueAttributesResponse> UpdateAttribute(string queueUrl, string attribute, string value);
+        Task<GetQueueAttributesResponse> UpdateAttribute(string queueName, string attribute, string value);
 
-        Task<GetQueueAttributesResponse> ShowAllAttributes(string queueUrl);
+        Task<GetQueueAttributesResponse> ShowAllAttributes(string queueName);
 
-        Task<DeleteQueueResponse> DeleteQueue(string queueUrl);
+        Task<DeleteQueueResponse> DeleteQueue(string queueName);
 
-        Task<SendMessageResponse> SendMessage(string queueUrl, string messageBody);
+        Task<SendMessageResponse> SendMessage(string queueName, string messageBody);
 
-        Task<SendMessageBatchResponse> SendMessageBatch(string queueUrl, List<SendMessageBatchRequestEntry> messages);
+        Task<SendMessageBatchResponse> SendMessageBatch(string queueName, List<SendMessageBatchRequestEntry> messages);
 
-        Task<PurgeQueueResponse> DeleteAllMessages(string queueUrl);
+        Task<PurgeQueueResponse> DeleteAllMessages(string queueName);
 
-        Task<DeleteMessageResponse> DeleteMessage(Message message, string queueUrl);
+        Task<DeleteMessageResponse> DeleteMessage(Message message, string queueName);
 
-        Task<ReceiveMessageResponse> GetMessage(string queueUrl, int waitTime = 0);
+        Task<ReceiveMessageResponse> GetMessage(string queueName, int waitTime = 0);
+
+        Task<string> GetQueueUrl(string queueName);
+
+        Task<List<T>> ExtractAndParserListSQSMessages<T>(string queueName);
+
+        Task<List<T>> ExtractAndParserSQSMessages<T>(string queueName);
     }
 }

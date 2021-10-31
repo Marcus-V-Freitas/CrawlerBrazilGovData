@@ -1,9 +1,14 @@
 ﻿using Application.Common;
+using Application.Entities.Configuration;
+using Application.Entities.DTOs;
 using Application.Services.Interfaces;
+using AutoMapper;
+using AWSHelpers.SQS.Interfaces;
 using Core.Utils;
 using Domain.Entities;
 using Domain.Interfaces;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.Extensions.Options;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -15,15 +20,23 @@ namespace Application.Services.Implementations
 {
     public class ParserService : GovDataUtils, IParserService
     {
+        private readonly Parser _parser;
         private readonly HttpClient _client;
+        private readonly IMapper _mapper;
+        private readonly ISQSHelper _SQSHelper;
         private readonly IHostingEnvironment _hostingEnvironment;
         private readonly IDatasetRepository _datasetRepository;
         private readonly IDataSourceRepository _dataSourceRepository;
+        private readonly IUrlExtractedRepository _extractedRepository;
         private readonly ITagRepository _tagRepository;
         private readonly IDatasetAditionalInformationRepository _datasetAditionalInformation;
         private readonly IDataSourceAditionalInformationRepository _dataSourceAditionalInformation;
 
-        public ParserService(IDatasetRepository datasetRepository, HttpClient client, IDatasetAditionalInformationRepository datasetAditionalInformation, ITagRepository tagRepository, IDataSourceAditionalInformationRepository dataSourceAditionalInformation, IDataSourceRepository dataSourceRepository, IHostingEnvironment hostingEnvironment)
+        public ParserService(IDatasetRepository datasetRepository, HttpClient client,
+                             IDatasetAditionalInformationRepository datasetAditionalInformation,
+                             ITagRepository tagRepository, IDataSourceAditionalInformationRepository dataSourceAditionalInformation,
+                             IDataSourceRepository dataSourceRepository, IHostingEnvironment hostingEnvironment,
+                             IUrlExtractedRepository extractedRepository, ISQSHelper sQSHelper, IOptions<Configs> options, IMapper mapper)
         {
             _client = client;
             _datasetRepository = datasetRepository;
@@ -32,15 +45,20 @@ namespace Application.Services.Implementations
             _dataSourceAditionalInformation = dataSourceAditionalInformation;
             _dataSourceRepository = dataSourceRepository;
             _hostingEnvironment = hostingEnvironment;
+            _extractedRepository = extractedRepository;
+            _SQSHelper = sQSHelper;
+            _parser = options.Value.Parser;
+            _mapper = mapper;
         }
 
-        public async Task<List<Dataset>> ParserUrlToDataset(List<UrlExtracted> urls)
+        public async Task<List<DatasetDTO>> ParserUrlToDataset(string search)
         {
-            List<Dataset> datasets = new();
+            List<DatasetDTO> datasetDTOs = new();
+            List<UrlExtractedDTO> urls = await GetUrlsParser(search);
 
             if (urls != null && urls.Any())
             {
-                foreach (UrlExtracted url in urls)
+                foreach (UrlExtractedDTO url in urls)
                 {
                     string html = await _client.GetResponseHtmlAsync(url.Url);
                     if (!string.IsNullOrEmpty(html))
@@ -48,12 +66,13 @@ namespace Application.Services.Implementations
                         Dataset dataset = await ExtractGeneralInfo(html);
                         if (dataset != null)
                         {
-                            datasets.Add(dataset);
+                            var datasetDTO = _mapper.Map<DatasetDTO>(dataset);
+                            datasetDTOs.Add(datasetDTO);
                         }
                     }
                 }
             }
-            return datasets;
+            return datasetDTOs;
         }
 
         private async Task<Dataset> ExtractGeneralInfo(string html)
@@ -132,7 +151,7 @@ namespace Application.Services.Implementations
 
             if (!string.IsNullOrEmpty(html))
             {
-                string urlFile = html.ExtractSingleInfoAttribute("//div[@id='content']//div[@class='module-content']/p[@class='muted ellipsis']/a", "href",false);
+                string urlFile = html.ExtractSingleInfoAttribute("//div[@id='content']//div[@class='module-content']/p[@class='muted ellipsis']/a", "href", false);
                 Dictionary<string, string> extracted = html.ExtractTableInfo(".//div[@id='content']//div[@class='module-content']/table");
 
                 if (extracted.Any())
@@ -188,6 +207,37 @@ namespace Application.Services.Implementations
                 aditionalInformationInserted = await _datasetAditionalInformation.InsertAsync(aditionalInformation);
             }
             return aditionalInformationInserted;
+        }
+
+        private async Task<List<UrlExtractedDTO>> GetUrlsBySearchFromMysql(string search)
+        {
+            List<UrlExtractedDTO> extractUrlsDTO = new();
+
+            if (_parser.GetUrlsMysql)
+            {
+                var extractUrls = await _extractedRepository.FindAllAsync(x => x.Search.ToUpper().Contains(search));
+                extractUrlsDTO = _mapper.Map<List<UrlExtractedDTO>>(extractUrls);
+            }
+            return extractUrlsDTO;
+        }
+
+        private async Task<List<UrlExtractedDTO>> GetUrlsBySearchFromSQS(string search)
+        {
+            List<UrlExtractedDTO> extractUrlsDTO = new();
+
+            if (_parser.GetUrlsSQS)
+            {
+                extractUrlsDTO.AddRange(await _SQSHelper.ExtractAndParserListSQSMessages<UrlExtractedDTO>(search));
+            }
+            return extractUrlsDTO;
+        }
+
+        private async Task<List<UrlExtractedDTO>> GetUrlsParser(string search)
+        {
+            List<UrlExtractedDTO> urlExtracteds = new();
+            urlExtracteds.AddRangeIfNotNullOrEmpty(await GetUrlsBySearchFromMysql(search));
+            urlExtracteds.AddRangeIfNotNullOrEmpty(await GetUrlsBySearchFromSQS(search));
+            return urlExtracteds;
         }
     }
 }
