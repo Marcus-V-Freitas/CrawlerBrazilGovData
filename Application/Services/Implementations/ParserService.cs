@@ -227,7 +227,7 @@ namespace Application.Services.Implementations
 
             if (_parser.GetUrlsSQS)
             {
-                extractUrlsDTO.AddRange(await _SQSHelper.ExtractAndParserListSQSMessages<UrlExtractedDTO>(search));
+                extractUrlsDTO.AddRange(await _SQSHelper.ExtractAndParserListSQSMessages<UrlExtractedDTO>(search, _parser.DeleteAllMessagesSQS, _parser.DeleteQueueSQS));
             }
             return extractUrlsDTO;
         }

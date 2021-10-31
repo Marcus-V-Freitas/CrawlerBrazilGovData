@@ -30,8 +30,8 @@ namespace AWSHelpers.SQS.Interfaces
 
         Task<string> GetQueueUrl(string queueName);
 
-        Task<List<T>> ExtractAndParserListSQSMessages<T>(string queueName);
+        Task<List<T>> ExtractAndParserListSQSMessages<T>(string queueName, bool deleteAllMessages = false, bool deleteQueue = false);
 
-        Task<List<T>> ExtractAndParserSQSMessages<T>(string queueName);
+        Task<List<T>> ExtractAndParserSQSMessages<T>(string queueName, bool deleteAllMessages = false, bool deleteQueue = false);
     }
 }

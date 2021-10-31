@@ -2,6 +2,8 @@
 using Application.Entities.Mappings;
 using Application.Services.Implementations;
 using Application.Services.Interfaces;
+using Core.Cache.Implementation;
+using Core.Cache.Interfaces;
 using Data.Context;
 using Data.Repositories;
 using Domain.Interfaces;
@@ -39,6 +41,10 @@ namespace IoC.DependencyInjection
             services.AddScoped<IUrlExtractedRepository, UrlExtractedRepository>();
             services.AddScoped<IDataSourceAditionalInformationRepository, DataSourceAditionalInformationRepository>();
             services.AddScoped<IDatasetAditionalInformationRepository, DatasetAditionalInformationRepository>();
+
+            //Memory Cache
+            services.AddMemoryCache();
+            services.AddSingleton<ICacheProvider, CacheProvider>();
 
             //Services
             services.AddScoped<IExtractUrlsService, ExtractUrlsService>();

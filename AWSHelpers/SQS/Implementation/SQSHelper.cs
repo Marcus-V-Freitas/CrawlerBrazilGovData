@@ -1,6 +1,7 @@
 ﻿using Amazon.SQS;
 using Amazon.SQS.Model;
 using AWSHelpers.SQS.Interfaces;
+using Core.Cache.Interfaces;
 using Newtonsoft.Json;
 using System.Collections.Generic;
 using System.Linq;
@@ -13,10 +14,12 @@ namespace AWSHelpers.SQS.Implementation
     {
         private readonly int MaxMessages = 10;
         private readonly IAmazonSQS _amazonSQS;
+        private readonly ICacheProvider _cache;
 
-        public SQSHelper(IAmazonSQS amazonSQS)
+        public SQSHelper(IAmazonSQS amazonSQS, ICacheProvider cache)
         {
             _amazonSQS = amazonSQS;
+            _cache = cache;
         }
 
         private static bool ValidAttribute(string attribute)
@@ -70,7 +73,14 @@ namespace AWSHelpers.SQS.Implementation
             //  attrs.Add();
             //}
 
-            return await _amazonSQS.CreateQueueAsync(new CreateQueueRequest { QueueName = queueName, Attributes = attrs });
+            var queueReponse = await _amazonSQS.CreateQueueAsync(new CreateQueueRequest { QueueName = queueName, Attributes = attrs });
+
+            if (queueReponse.HttpStatusCode == HttpStatusCode.OK)
+            {
+                await _cache.GetOrCreateAsync(queueName, queueReponse.QueueUrl);
+            }
+
+            return queueReponse;
         }
 
         public async Task<string> GetQueueArn(string queueName)
@@ -86,56 +96,92 @@ namespace AWSHelpers.SQS.Implementation
 
         public async Task<GetQueueAttributesResponse> UpdateAttribute(string queueName, string attribute, string value)
         {
-            if (ValidAttribute(attribute))
+            string queueUrl = await GetQueueUrl(queueName);
+            if (ValidAttribute(attribute) && !string.IsNullOrEmpty(queueUrl))
             {
-                await _amazonSQS.SetQueueAttributesAsync(await GetQueueUrl(queueName), new Dictionary<string, string> { { attribute, value } });
+                await _amazonSQS.SetQueueAttributesAsync(queueUrl, new Dictionary<string, string> { { attribute, value } });
             }
             return await ShowAllAttributes(queueName);
         }
 
         public async Task<GetQueueAttributesResponse> ShowAllAttributes(string queueName)
         {
-            return await _amazonSQS.GetQueueAttributesAsync(await GetQueueUrl(queueName), new List<string> { QueueAttributeName.All });
+            string queueUrl = await GetQueueUrl(queueName);
+            if (!string.IsNullOrEmpty(queueUrl))
+            {
+                return await _amazonSQS.GetQueueAttributesAsync(queueUrl, new List<string> { QueueAttributeName.All });
+            }
+            return null;
         }
 
         public async Task<DeleteQueueResponse> DeleteQueue(string queueName)
         {
-            return await _amazonSQS.DeleteQueueAsync(await GetQueueUrl(queueName));
+            string queueUrl = await GetQueueUrl(queueName);
+            if (!string.IsNullOrEmpty(queueUrl))
+            {
+                return await _amazonSQS.DeleteQueueAsync(queueUrl);
+            }
+            return null;
         }
 
         public async Task<SendMessageResponse> SendMessage(string queueName, string messageBody)
         {
-            return await _amazonSQS.SendMessageAsync(await GetQueueUrl(queueName), messageBody);
+            string queueUrl = await GetQueueUrl(queueName);
+            if (!string.IsNullOrEmpty(queueUrl))
+            {
+                return await _amazonSQS.SendMessageAsync(queueUrl, messageBody);
+            }
+            return null;
         }
 
         public async Task<SendMessageBatchResponse> SendMessageBatch(string queueName, List<SendMessageBatchRequestEntry> messages)
         {
-            return await _amazonSQS.SendMessageBatchAsync(await GetQueueUrl(queueName), messages);
+            string queueUrl = await GetQueueUrl(queueName);
+            if (!string.IsNullOrEmpty(queueUrl))
+            {
+                return await _amazonSQS.SendMessageBatchAsync(queueUrl, messages);
+            }
+            return null;
         }
 
         public async Task<PurgeQueueResponse> DeleteAllMessages(string queueName)
         {
-            return await _amazonSQS.PurgeQueueAsync(await GetQueueUrl(queueName));
+            string queueUrl = await GetQueueUrl(queueName);
+            if (!string.IsNullOrEmpty(queueUrl))
+            {
+                return await _amazonSQS.PurgeQueueAsync(queueUrl);
+            }
+            return null;
         }
 
         public async Task<DeleteMessageResponse> DeleteMessage(Message message, string queueName)
         {
-            return await _amazonSQS.DeleteMessageAsync(await GetQueueUrl(queueName), message.ReceiptHandle);
+            string queueUrl = await GetQueueUrl(queueName);
+            if (!string.IsNullOrEmpty(queueUrl))
+            {
+                return await _amazonSQS.DeleteMessageAsync(queueUrl, message.ReceiptHandle);
+            }
+            return null;
         }
 
         public async Task<ReceiveMessageResponse> GetMessage(string queueName, int waitTime = 0)
         {
             string queueUrl = await GetQueueUrl(queueName);
-            return await _amazonSQS.ReceiveMessageAsync(new ReceiveMessageRequest
+
+            if (!string.IsNullOrEmpty(queueUrl))
             {
-                QueueUrl = queueUrl,
-                MaxNumberOfMessages = MaxMessages,
-                WaitTimeSeconds = waitTime,
-                // (Could also request attributes, set visibility timeout, etc.)
-            });
+                return await _amazonSQS.ReceiveMessageAsync(new ReceiveMessageRequest
+                {
+                    QueueUrl = queueUrl,
+                    MaxNumberOfMessages = MaxMessages,
+                    WaitTimeSeconds = waitTime,
+                    // (Could also request attributes, set visibility timeout, etc.)
+                });
+            }
+            return null;
         }
 
-        public async Task<List<T>> ExtractAndParserListSQSMessages<T>(string queueName)
+        public async Task<List<T>> ExtractAndParserListSQSMessages<T>(string queueName, bool deleteAllMessages = false, bool deleteQueue = false)
         {
             List<T> listMessages = new();
             var messages = await GetMessage(queueName);
@@ -151,11 +197,21 @@ namespace AWSHelpers.SQS.Implementation
                         listMessages.AddRange(messagesObj);
                     }
                 }
+
+                if (deleteAllMessages)
+                {
+                    await DeleteAllMessages(queueName);
+                }
+
+                if (deleteQueue)
+                {
+                    await DeleteQueue(queueName);
+                }
             }
             return listMessages;
         }
 
-        public async Task<List<T>> ExtractAndParserSQSMessages<T>(string queueName)
+        public async Task<List<T>> ExtractAndParserSQSMessages<T>(string queueName, bool deleteAllMessages = false, bool deleteQueue = false)
         {
             List<T> listMessages = new();
             var messages = await GetMessage(queueName);
@@ -171,18 +227,33 @@ namespace AWSHelpers.SQS.Implementation
                         listMessages.Add(messageObj);
                     }
                 }
+
+                if (deleteAllMessages)
+                {
+                    await DeleteAllMessages(queueName);
+                }
+
+                if (deleteQueue)
+                {
+                    await DeleteQueue(queueName);
+                }
             }
             return listMessages;
         }
 
         public async Task<string> GetQueueUrl(string queueName)
         {
-            string queueUrl = string.Empty;
-            ListQueuesResponse queues = await ShowQueues(queueName);
+            string queueUrl = await _cache.GetOrCreateAsync(queueName);
 
-            if (queues != null && queues.QueueUrls.Any())
+            if (string.IsNullOrEmpty(queueUrl))
             {
-                queueUrl = queues.QueueUrls.FirstOrDefault();
+                ListQueuesResponse queues = await ShowQueues(queueName);
+
+                if (queues != null && queues.QueueUrls.Any())
+                {
+                    queueUrl = queues.QueueUrls.FirstOrDefault();
+                    await _cache.GetOrCreateAsync(queueName, queueUrl);
+                }
             }
             return queueUrl;
         }

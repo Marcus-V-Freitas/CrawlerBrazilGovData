@@ -88,7 +88,7 @@ namespace Application.Services.Implementations
                 if (queue.HttpStatusCode == HttpStatusCode.OK)
                 {
                     string json = JsonConvert.SerializeObject(extratedUrls);
-                    var sendMessage = await _SQSHelper.SendMessage(queue.QueueUrl, json);
+                    var sendMessage = await _SQSHelper.SendMessage(search, json);
 
                     if (sendMessage.HttpStatusCode == HttpStatusCode.OK)
                     {
