@@ -3,6 +3,7 @@ using Application.Entities.Configuration;
 using Application.Entities.DTOs;
 using Application.Services.Interfaces;
 using AutoMapper;
+using AWSHelpers.S3.Interfaces;
 using AWSHelpers.SQS.Interfaces;
 using Core.Utils;
 using Domain.Entities;
@@ -23,6 +24,7 @@ namespace Application.Services.Implementations
         private readonly Parser _parser;
         private readonly HttpClient _client;
         private readonly IMapper _mapper;
+        private readonly IS3Helper _S3Helper;
         private readonly ISQSHelper _SQSHelper;
         private readonly IHostingEnvironment _hostingEnvironment;
         private readonly IDatasetRepository _datasetRepository;
@@ -36,7 +38,7 @@ namespace Application.Services.Implementations
                              IDatasetAditionalInformationRepository datasetAditionalInformation,
                              ITagRepository tagRepository, IDataSourceAditionalInformationRepository dataSourceAditionalInformation,
                              IDataSourceRepository dataSourceRepository, IHostingEnvironment hostingEnvironment,
-                             IUrlExtractedRepository extractedRepository, ISQSHelper sQSHelper, IOptions<Configs> options, IMapper mapper)
+                             IUrlExtractedRepository extractedRepository, ISQSHelper sQSHelper, IOptions<Configs> options, IMapper mapper, IS3Helper s3Helper)
         {
             _client = client;
             _datasetRepository = datasetRepository;
@@ -47,6 +49,7 @@ namespace Application.Services.Implementations
             _hostingEnvironment = hostingEnvironment;
             _extractedRepository = extractedRepository;
             _SQSHelper = sQSHelper;
+            _S3Helper = s3Helper;
             _parser = options.Value.Parser;
             _mapper = mapper;
         }
@@ -63,7 +66,7 @@ namespace Application.Services.Implementations
                     string html = await _client.GetResponseHtmlAsync(url.Url);
                     if (!string.IsNullOrEmpty(html))
                     {
-                        Dataset dataset = await ExtractGeneralInfo(html);
+                        Dataset dataset = await ExtractGeneralInfo(html, search);
                         if (dataset != null)
                         {
                             var datasetDTO = _mapper.Map<DatasetDTO>(dataset);
@@ -75,16 +78,16 @@ namespace Application.Services.Implementations
             return datasetDTOs;
         }
 
-        private async Task<Dataset> ExtractGeneralInfo(string html)
+        private async Task<Dataset> ExtractGeneralInfo(string html, string search)
         {
             DatasetAditionalInformation aditionalInformation = await ExtractDatasetAddionalInformation(html);
             Dataset dataset = await ExtractDatasetInformation(html, aditionalInformation.Id);
             await ExtractTagInformation(html, dataset.Id);
-            await ExtractDataSourcesInformation(html, dataset);
+            await ExtractDataSourcesInformation(html, dataset, search);
             return dataset;
         }
 
-        private async Task<List<DataSource>> ExtractDataSourcesInformation(string html, Dataset dataset)
+        private async Task<List<DataSource>> ExtractDataSourcesInformation(string html, Dataset dataset, string search)
         {
             List<string> titles = html.ExtractListInfo(".//div[@id='content']//article[@class='module']//ul[@class='resource-list']/li[@class='resource-item']//a[@class='heading']");
             List<string> urls = html.ExtractListInfoAttributes(".//div[@id='content']//article[@class='module']//ul[@class='resource-list']/li[@class='resource-item']//a[@class='heading']", "href", false);
@@ -99,7 +102,7 @@ namespace Application.Services.Implementations
 
                     if (addionalInformation != null)
                     {
-                        string downloadPath = DownloadDataSourceDocument(addionalInformation.UrlFile);
+                        string downloadPath = await DownloadDataSourceDocument(addionalInformation.UrlFile, search);
                         DataSource dataSource = new(titles[indice], urlHtml, downloadPath, addionalInformation.Id, dataset.Id);
                         var dataSourceInserted = await _dataSourceRepository.InsertAsync(dataSource);
                         dataSources.Add(dataSourceInserted);
@@ -180,12 +183,14 @@ namespace Application.Services.Implementations
             return aditionalInformationInserted;
         }
 
-        private string DownloadDataSourceDocument(string url)
+        private async Task<string> DownloadDataSourceDocument(string url, string search)
         {
             string downloadPath = string.Empty;
+
             if (!string.IsNullOrEmpty(url))
             {
                 downloadPath = url.DownloadFilesFromUrl(Path.Combine(_hostingEnvironment.WebRootPath, "Files"), true);
+                await SaveFilesS3(url, search);
             }
             return downloadPath;
         }
@@ -238,6 +243,17 @@ namespace Application.Services.Implementations
             urlExtracteds.AddRangeIfNotNullOrEmpty(await GetUrlsBySearchFromMysql(search));
             urlExtracteds.AddRangeIfNotNullOrEmpty(await GetUrlsBySearchFromSQS(search));
             return urlExtracteds;
+        }
+
+        private async Task<bool> SaveFilesS3(string url, string search)
+        {
+            if (_parser.S3Save)
+            {
+                Stream stream = url.DownloadFilesFromUrl();
+                string filename = url.GenerateRandomFileName();
+                return await _S3Helper.UploadFileAsync(_parser.BucketNameS3, stream, filename, search);
+            }
+            return false;
         }
     }
 }

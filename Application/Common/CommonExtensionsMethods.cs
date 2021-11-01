@@ -226,6 +226,16 @@ namespace Application.Common
             return filename;
         }
 
+        public static Stream DownloadFilesFromUrl(this string url)
+        {
+            using (WebClientCrawler webClient = new WebClientCrawler())
+            {
+                webClient.Timeout = 10;
+                var content = webClient.DownloadData(url);
+                return new MemoryStream(content);
+            }
+        }
+
         public static string DownloadFilesFromUrl(this string url, string pathSave, bool folderTypeFile = false)
         {
             string completeDownloadPath = string.Empty;
@@ -260,6 +270,18 @@ namespace Application.Common
                 completeDownloadPath = string.Empty;
             }
             return completeDownloadPath;
+        }
+
+        public static string GenerateRandomFileName(this string url)
+        {
+            string filename = url.GetFileNameFromUrl();
+            string extension = filename.GetExtensionOrDefault(false, false);
+
+            if (!string.IsNullOrEmpty(filename) && !string.IsNullOrEmpty(extension))
+            {
+                return $"{Guid.NewGuid()}.{extension}";
+            }
+            return string.Empty;
         }
 
         private static string GetExtensionOrDefault(this string filename, bool dot = true, bool normalize = true)

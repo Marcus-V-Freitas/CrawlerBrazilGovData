@@ -186,7 +186,7 @@ namespace AWSHelpers.SQS.Implementation
             List<T> listMessages = new();
             var messages = await GetMessage(queueName);
 
-            if (messages.HttpStatusCode == HttpStatusCode.OK && messages.Messages.Any())
+            if (messages != null && messages.HttpStatusCode == HttpStatusCode.OK && messages.Messages.Any())
             {
                 var jsonMessages = messages.Messages.Select(x => x.Body).ToList();
                 foreach (var jsonMessage in jsonMessages)
