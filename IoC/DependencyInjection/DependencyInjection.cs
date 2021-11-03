@@ -11,6 +11,8 @@ using IoC.Middlewares;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Serialization;
 using System.Net.Http;
 
 namespace IoC.DependencyInjection
@@ -21,18 +23,30 @@ namespace IoC.DependencyInjection
         {
             //Database
             string mySqlConnectionStr = configuration.GetConnectionString("DefaultConnection");
-            services.AddDbContextPool<CrawlerBrazilGovDataContext>(options =>
+            services.AddDbContext<CrawlerBrazilGovDataContext>(options =>
             {
                 options.UseMySql(mySqlConnectionStr, ServerVersion.AutoDetect(mySqlConnectionStr),
                                  mySqlOptionsAction: x => x.MigrationsAssembly(nameof(Data)));
-            });
+            }, ServiceLifetime.Transient);
 
             //AutoMapper
             services.AddAutoMapper(typeof(DomainMappingProfile));
 
-            //Exceptions
-            services.AddScoped<HttpClient>();
+            //Exception
             services.AddTransient<GlobalExceptionHandlerMiddleware>();
+
+            //General
+            services.AddScoped<HttpClient>();
+            services.AddControllers();
+
+            //JSON settings
+            JsonConvert.DefaultSettings = () => new JsonSerializerSettings
+            {
+                Formatting = Formatting.None,
+                ReferenceLoopHandling = ReferenceLoopHandling.Ignore,
+                TypeNameHandling = TypeNameHandling.Objects,
+                ContractResolver = new CamelCasePropertyNamesContractResolver()
+            };
 
             //Repositories
             services.AddScoped<ITagRepository, TagRepository>();

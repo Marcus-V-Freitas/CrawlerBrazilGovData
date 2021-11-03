@@ -10,7 +10,7 @@ namespace Application.Entities.Mappings
         {
             CreateMap<DatasetAditionalInformation, DatasetAditionalInformationDTO>().ReverseMap();
             CreateMap<Dataset, DatasetDTO>().ReverseMap();
-            CreateMap<DataSourceAditionalInformationDTO, DataSourceAditionalInformationDTO>().ReverseMap();
+            CreateMap<DataSourceAditionalInformation, DataSourceAditionalInformationDTO>().ReverseMap();
             CreateMap<DataSource, DataSourceDTO>().ReverseMap();
             CreateMap<Tag, TagDTO>().ReverseMap();
             CreateMap<UrlExtracted, UrlExtractedDTO>().ReverseMap();

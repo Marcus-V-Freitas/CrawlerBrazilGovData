@@ -101,15 +101,19 @@ namespace Application.Services.Implementations
 
         private async Task<UrlExtracted> SaveMysql(string search, UrlExtracted urlExtracted)
         {
-            var urlExtractedInserted = urlExtracted;
+            UrlExtracted urlExtractedInserted = new();
             if (_configs.Bootstrap.MysqlSave)
             {
-                await _urlExtractedRepository.FindAsync(x => x.Search == search && x.Title == urlExtracted.Title);
+                var urlExtractedPreviousInserted = await _urlExtractedRepository.FindAsync(x => x.Search == search && x.Title == urlExtracted.Title);
 
-                if (urlExtractedInserted == null)
+                if (urlExtractedPreviousInserted == null)
                 {
                     urlExtractedInserted = await _urlExtractedRepository.InsertAsync(urlExtracted);
                 }
+            }
+            else
+            {
+                urlExtractedInserted = urlExtracted;
             }
             return urlExtractedInserted;
         }

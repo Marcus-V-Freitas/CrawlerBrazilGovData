@@ -1,11 +1,10 @@
+using Core.Log;
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Logging;
+using Serilog;
+using Serilog.Events;
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
+using System.IO;
 
 namespace CrawlerBrazilGovData
 {
@@ -13,7 +12,30 @@ namespace CrawlerBrazilGovData
     {
         public static void Main(string[] args)
         {
-            CreateHostBuilder(args).Build().Run();
+            CurrentDirectoryHelpers.SetCurrentDirectory();
+            string caminhoLog = Path.Combine(Directory.GetCurrentDirectory(), "Logs.txt");
+
+            Log.Logger = new LoggerConfiguration()
+            .MinimumLevel.Debug()
+            .MinimumLevel.Override("Microsoft", LogEventLevel.Error)
+            .Enrich.FromLogContext()
+            .WriteTo.File(caminhoLog)
+            .CreateLogger();
+
+            try
+            {
+                Log.Information("--- SERVER STARTING ---");
+                CreateHostBuilder(args).Build().Run();
+            }
+            catch (Exception ex)
+            {
+                Log.Fatal(ex, "--- SERVER ENDED UNEXPECTEDLY ---");
+            }
+            finally
+            {
+                Log.Information("--- SERVER ENDING ---");
+                Log.CloseAndFlush();
+            }
         }
 
         public static IHostBuilder CreateHostBuilder(string[] args) =>
@@ -21,6 +43,6 @@ namespace CrawlerBrazilGovData
                 .ConfigureWebHostDefaults(webBuilder =>
                 {
                     webBuilder.UseStartup<Startup>();
-                });
+                }).UseSerilog();
     }
 }

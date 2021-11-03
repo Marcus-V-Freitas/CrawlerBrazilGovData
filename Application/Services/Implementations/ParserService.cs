@@ -57,6 +57,7 @@ namespace Application.Services.Implementations
         public async Task<List<DatasetDTO>> ParserUrlToDataset(string search)
         {
             List<DatasetDTO> datasetDTOs = new();
+            List<Task<Dataset>> datasetsTasks = new();
             List<UrlExtractedDTO> urls = await GetUrlsParser(search);
 
             if (urls != null && urls.Any())
@@ -66,15 +67,17 @@ namespace Application.Services.Implementations
                     string html = await _client.GetResponseHtmlAsync(url.Url);
                     if (!string.IsNullOrEmpty(html))
                     {
-                        Dataset dataset = await ExtractGeneralInfo(html, search);
-                        if (dataset != null)
-                        {
-                            var datasetDTO = _mapper.Map<DatasetDTO>(dataset);
-                            datasetDTOs.Add(datasetDTO);
-                        }
+                        datasetsTasks.Add(ExtractGeneralInfo(html, search));
                     }
                 }
             }
+
+            if (datasetsTasks.Any())
+            {
+                var datasets = await Task.WhenAll(datasetsTasks);
+                datasetDTOs = _mapper.Map<List<DatasetDTO>>(datasets);
+            }
+
             return datasetDTOs;
         }
 

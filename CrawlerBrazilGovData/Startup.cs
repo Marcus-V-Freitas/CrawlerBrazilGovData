@@ -5,8 +5,6 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using Newtonsoft.Json;
-using Serilog;
 using System;
 using System.IO;
 using System.Reflection;
@@ -28,21 +26,6 @@ namespace CrawlerBrazilGovData
             services.AddInfrastructure(Configuration);
             services.AddInfrastructureSwagger(GetXmlDataAnnotationFilePath());
             services.AddAWS(Configuration);
-
-            services.AddControllers()
-                  .AddNewtonsoftJson(x =>
-                  {
-                      x.SerializerSettings.ReferenceLoopHandling = ReferenceLoopHandling.Ignore;
-                  });
-
-            services.AddControllers();
-
-            var logger = new LoggerConfiguration()
-               .Enrich.FromLogContext()
-               .ReadFrom.Configuration(Configuration);
-
-            Log.Logger = logger.CreateLogger();
-            Log.Information("web api service is started.");
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -54,6 +37,8 @@ namespace CrawlerBrazilGovData
                 app.UseSwagger();
                 app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "CrawlerBrazilGovData v1"));
             }
+
+            app.UseStaticFiles();
 
             app.UseRouting();
 
