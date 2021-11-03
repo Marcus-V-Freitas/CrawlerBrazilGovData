@@ -1,6 +1,7 @@
 ﻿using Application.Entities.DTOs;
 using Application.Services.Interfaces;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging;
 using Swashbuckle.AspNetCore.Annotations;
 using System.Collections.Generic;
 using System.Net;
@@ -8,16 +9,21 @@ using System.Threading.Tasks;
 
 namespace CrawlerBrazilGovData.Controllers
 {
+    /// <summary>
+    /// API endpoint (ExtractUrls)
+    /// </summary>
     [ApiController]
     [Route("api/[controller]")]
     [Produces("application/json")]
     public class ExtractUrlsController : Controller
     {
         private readonly IExtractUrlsService _extractUrlsService;
+        private readonly ILogger<ExtractUrlsController> _logger;
 
-        public ExtractUrlsController(IExtractUrlsService extractUrlsService)
+        public ExtractUrlsController(IExtractUrlsService extractUrlsService, ILogger<ExtractUrlsController> logger)
         {
             _extractUrlsService = extractUrlsService;
+            _logger = logger;
         }
 
         /// <summary>
@@ -31,14 +37,19 @@ namespace CrawlerBrazilGovData.Controllers
         [SwaggerResponse((int)HttpStatusCode.InternalServerError, Description = "Unexpected error")]
         public async Task<IActionResult> ExtractUrlsBySearch([FromQuery] string search)
         {
-            var result = await _extractUrlsService.ExtractUrlsBySearch(search);
+            _logger.LogDebug($"[GET] - Method: {nameof(ExtractUrlsBySearch)} - Query: {search}");
 
-            if (result == null)
+            var results = await _extractUrlsService.ExtractUrlsBySearch(search);
+
+            if (results == null)
             {
+                _logger.LogTrace($"[RESPONSE] - Method: {nameof(ExtractUrlsBySearch)} - NOT FOUND - Query: {search}");
                 return NotFound("No data was found with the current keyword!");
             }
 
-            return Ok(result);
+            _logger.LogTrace($"[RESPONSE] - Method: {nameof(ExtractUrlsBySearch)} - Count: {results.Count} - Query: {search}");
+
+            return Ok(results);
         }
     }
 }

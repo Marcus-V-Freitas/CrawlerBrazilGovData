@@ -24,7 +24,7 @@ namespace IoC.Middlewares
             }
             catch (Exception ex)
             {
-                _logger.LogError($"Unexpected error: {ex}");
+                _logger.LogError($"Unexpected error: {ex.StackTrace}");
                 await HandleExceptionAsync(context, ex);
             }
         }

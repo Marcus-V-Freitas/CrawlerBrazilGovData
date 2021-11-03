@@ -1,6 +1,7 @@
 ﻿using Application.Entities.DTOs;
 using Application.Services.Interfaces;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging;
 using Swashbuckle.AspNetCore.Annotations;
 using System.Collections.Generic;
 using System.Net;
@@ -8,16 +9,21 @@ using System.Threading.Tasks;
 
 namespace CrawlerBrazilGovData.Controllers
 {
+    /// <summary>
+    /// API endpoint (Parser)
+    /// </summary>
     [ApiController]
     [Route("api/[controller]")]
     [Produces("application/json")]
     public class ParserController : ControllerBase
     {
         private readonly IParserService _parserService;
+        private readonly ILogger<ParserController> _logger;
 
-        public ParserController(IParserService parserService)
+        public ParserController(IParserService parserService, ILogger<ParserController> logger)
         {
             _parserService = parserService;
+            _logger = logger;
         }
 
         /// <summary>
@@ -31,13 +37,18 @@ namespace CrawlerBrazilGovData.Controllers
         [SwaggerResponse((int)HttpStatusCode.InternalServerError, Description = "Unexpected error")]
         public async Task<IActionResult> ParserBySearch([FromQuery] string search)
         {
-            var datasets = await _parserService.ParserUrlToDataset(search);
+            _logger.LogDebug($"[GET] - Method: {nameof(ParserBySearch)} - Query: {search}");
+            var results = await _parserService.ParserUrlToDataset(search);
 
-            if (datasets == null)
+            if (results == null)
             {
+                _logger.LogTrace($"[RESPONSE] - Method: {nameof(ParserBySearch)} - NOT FOUND - Query: {search}");
                 return NotFound("No data was found with the current keyword!");
             }
-            return Ok(datasets);
+
+            _logger.LogTrace($"[RESPONSE] - Method: {nameof(ParserBySearch)} - Count: {results.Count} - Query: {search}");
+
+            return Ok(results);
         }
     }
 }
