@@ -1,10 +1,10 @@
-using Core.Log;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Hosting;
 using Serilog;
 using Serilog.Events;
 using System;
 using System.IO;
+using System.Reflection;
 
 namespace CrawlerBrazilGovData
 {
@@ -12,14 +12,13 @@ namespace CrawlerBrazilGovData
     {
         public static void Main(string[] args)
         {
-            CurrentDirectoryHelpers.SetCurrentDirectory();
-            string caminhoLog = Path.Combine(Directory.GetCurrentDirectory(), "Logs.txt");
+            string log = Path.Combine(Path.GetDirectoryName(Assembly.GetEntryAssembly().Location), "Logs.txt");
 
             Log.Logger = new LoggerConfiguration()
             .MinimumLevel.Debug()
             .MinimumLevel.Override("Microsoft", LogEventLevel.Error)
             .Enrich.FromLogContext()
-            .WriteTo.File(caminhoLog)
+            .WriteTo.File(log)
             .CreateLogger();
 
             try
