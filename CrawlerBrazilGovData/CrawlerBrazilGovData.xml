@@ -4,12 +4,22 @@
         <name>CrawlerBrazilGovData</name>
     </assembly>
     <members>
+        <member name="T:CrawlerBrazilGovData.Controllers.ExtractUrlsController">
+            <summary>
+            API endpoint (ExtractUrls)
+            </summary>
+        </member>
         <member name="M:CrawlerBrazilGovData.Controllers.ExtractUrlsController.ExtractUrlsBySearch(System.String)">
             <summary>
             Extract all url by search term
             </summary>
             <param name="search"> search term </param>
             <returns> Array Urls Found </returns>
+        </member>
+        <member name="T:CrawlerBrazilGovData.Controllers.ParserController">
+            <summary>
+            API endpoint (Parser)
+            </summary>
         </member>
         <member name="M:CrawlerBrazilGovData.Controllers.ParserController.ParserBySearch(System.String)">
             <summary>

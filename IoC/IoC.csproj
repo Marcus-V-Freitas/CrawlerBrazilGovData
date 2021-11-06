@@ -27,9 +27,10 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Application\Application.csproj" />
     <ProjectReference Include="..\AWSHelpers\AWSHelpers.csproj" />
-    <ProjectReference Include="..\Data\Data.csproj" />
+    <ProjectReference Include="..\Contexts\SPGovernmentData\SPGovernmentData.Application\SPGovernmentData.Application.csproj" />
+    <ProjectReference Include="..\Contexts\SPGovernmentData\SPGovernmentData.Data\SPGovernmentData.Data.csproj" />
+    <ProjectReference Include="..\Contexts\SPGovernmentData\SPGovernmentData.Domain\SPGovernmentData.Domain.csproj" />
   </ItemGroup>
 
 </Project>
