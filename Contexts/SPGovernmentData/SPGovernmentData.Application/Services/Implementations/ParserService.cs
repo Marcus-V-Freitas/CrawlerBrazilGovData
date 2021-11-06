@@ -3,6 +3,7 @@ using AWSHelpers.S3.Interfaces;
 using AWSHelpers.SQS.Interfaces;
 using Core.Common;
 using Core.Configuration;
+using Core.Web.Entities;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Options;
 using SPGovernmentData.Application.Entities.DTOs;
@@ -64,8 +65,8 @@ namespace SPGovernmentData.Application.Services.Implementations
             {
                 foreach (UrlExtractedDTO url in urls)
                 {
-                    string html = await _client.GetResponseHtmlAsync(url.Url);
-                    if (!string.IsNullOrEmpty(html))
+                    HtmlString html = await _client.GetResponseHtmlAsync(url.Url);
+                    if (!html.IsNullOrEmpty)
                     {
                         datasetsTasks.Add(ExtractGeneralInfo(html, search));
                     }
@@ -81,7 +82,7 @@ namespace SPGovernmentData.Application.Services.Implementations
             return datasetDTOs;
         }
 
-        private async Task<Dataset> ExtractGeneralInfo(string html, string search)
+        private async Task<Dataset> ExtractGeneralInfo(HtmlString html, string search)
         {
             DatasetAditionalInformation aditionalInformation = await ExtractDatasetAddionalInformation(html);
             Dataset dataset = await ExtractDatasetInformation(html, aditionalInformation.Id);
@@ -90,7 +91,7 @@ namespace SPGovernmentData.Application.Services.Implementations
             return dataset;
         }
 
-        private async Task<List<DataSource>> ExtractDataSourcesInformation(string html, Dataset dataset, string search)
+        private async Task<List<DataSource>> ExtractDataSourcesInformation(HtmlString html, Dataset dataset, string search)
         {
             List<string> titles = html.ExtractListInfo(".//div[@id='content']//article[@class='module']//ul[@class='resource-list']/li[@class='resource-item']//a[@class='heading']");
             List<string> urls = html.ExtractListInfoAttributes(".//div[@id='content']//article[@class='module']//ul[@class='resource-list']/li[@class='resource-item']//a[@class='heading']", "href", false);
@@ -115,7 +116,7 @@ namespace SPGovernmentData.Application.Services.Implementations
             return dataSources;
         }
 
-        private async Task<List<Tag>> ExtractTagInformation(string html, int? datasetId)
+        private async Task<List<Tag>> ExtractTagInformation(HtmlString html, int? datasetId)
         {
             List<string> tagsName = html.ExtractListInfo(".//div[@id='content']//section[@class='tags']/ul[@class='tag-list well']/li/a[@class='tag']");
             List<Tag> tags = new();
@@ -136,7 +137,7 @@ namespace SPGovernmentData.Application.Services.Implementations
             return tags;
         }
 
-        private async Task<Dataset> ExtractDatasetInformation(string html, int? aditionalInformationId)
+        private async Task<Dataset> ExtractDatasetInformation(HtmlString html, int? aditionalInformationId)
         {
             string title = html.ExtractSingleInfo(".//div[@id='content']//article[@class='module']//h1");
             string description = html.ExtractSingleInfo(".//div[@id='content']//div[@class='notes embedded-content']//p");
@@ -153,9 +154,9 @@ namespace SPGovernmentData.Application.Services.Implementations
         private async Task<DataSourceAditionalInformation> ExtractDatasourceAddionalInformation(string url)
         {
             DataSourceAditionalInformation aditionalInformationInserted = new();
-            string html = await _client.GetResponseHtmlAsync(url);
+            HtmlString html = await _client.GetResponseHtmlAsync(url);
 
-            if (!string.IsNullOrEmpty(html))
+            if (!html.IsNullOrEmpty)
             {
                 string urlFile = html.ExtractSingleInfoAttribute("//div[@id='content']//div[@class='module-content']/p[@class='muted ellipsis']/a", "href", false);
                 Dictionary<string, string> extracted = html.ExtractTableInfo(".//div[@id='content']//div[@class='module-content']/table");
@@ -198,7 +199,7 @@ namespace SPGovernmentData.Application.Services.Implementations
             return downloadPath;
         }
 
-        private async Task<DatasetAditionalInformation> ExtractDatasetAddionalInformation(string html)
+        private async Task<DatasetAditionalInformation> ExtractDatasetAddionalInformation(HtmlString html)
         {
             DatasetAditionalInformation aditionalInformationInserted = new();
             Dictionary<string, string> extracted = html.ExtractTableInfo(".//div[@id='content']//table[@class='table table-striped table-bordered table-condensed']");

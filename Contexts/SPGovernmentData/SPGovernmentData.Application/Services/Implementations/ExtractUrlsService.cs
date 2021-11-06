@@ -2,6 +2,7 @@
 using AWSHelpers.SQS.Interfaces;
 using Core.Common;
 using Core.Configuration;
+using Core.Web.Entities;
 using HtmlAgilityPack;
 using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
@@ -38,7 +39,7 @@ namespace SPGovernmentData.Application.Services.Implementations
         public async Task<List<UrlExtractedDTO>> ExtractUrlsBySearch(string search)
         {
             List<UrlExtractedDTO> extratedUrlsDTO = new();
-            var htmlResponse = await _client.GetResponseHtmlAsync(string.Format(_baseUrlGov.CombineUrl(_searchDatasets), search));
+            HtmlString htmlResponse = await _client.GetResponseHtmlAsync(string.Format(_baseUrlGov.CombineUrl(_searchDatasets), search));
             HtmlDocument doc = htmlResponse.CreateHtmlDocument();
             HtmlNodeCollection urlNodes = doc.DocumentNode.SelectNodes(".//div[@id='content']//li[@class='dataset-item']//h3[@class='dataset-heading']/a");
 

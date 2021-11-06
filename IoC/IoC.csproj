@@ -31,6 +31,8 @@
     <ProjectReference Include="..\Contexts\SPGovernmentData\SPGovernmentData.Application\SPGovernmentData.Application.csproj" />
     <ProjectReference Include="..\Contexts\SPGovernmentData\SPGovernmentData.Data\SPGovernmentData.Data.csproj" />
     <ProjectReference Include="..\Contexts\SPGovernmentData\SPGovernmentData.Domain\SPGovernmentData.Domain.csproj" />
+    <ProjectReference Include="..\Contexts\SPNewsData\SPNewsData.Application\SPNewsData.Application.csproj" />
+    <ProjectReference Include="..\Contexts\SPNewsData\SPNewsData.Data\SPNewsData.Data.csproj" />
   </ItemGroup>
 
 </Project>

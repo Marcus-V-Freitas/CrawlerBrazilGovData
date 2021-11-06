@@ -15,11 +15,19 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Contexts", "Contexts", "{BA
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "SPGovernmentData", "SPGovernmentData", "{20D84849-388B-4F85-899F-BD2B5749D833}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SPGovernmentData.Application", "Contexts\SPGovernmentData\SPGovernmentData.Application\SPGovernmentData.Application.csproj", "{18BA0CFD-094D-4527-AE82-B2CD3B33B1EC}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SPGovernmentData.Application", "Contexts\SPGovernmentData\SPGovernmentData.Application\SPGovernmentData.Application.csproj", "{18BA0CFD-094D-4527-AE82-B2CD3B33B1EC}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SPGovernmentData.Data", "Contexts\SPGovernmentData\SPGovernmentData.Data\SPGovernmentData.Data.csproj", "{2CB72576-2AC4-4777-841C-4A850682A850}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SPGovernmentData.Data", "Contexts\SPGovernmentData\SPGovernmentData.Data\SPGovernmentData.Data.csproj", "{2CB72576-2AC4-4777-841C-4A850682A850}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SPGovernmentData.Domain", "Contexts\SPGovernmentData\SPGovernmentData.Domain\SPGovernmentData.Domain.csproj", "{6B80CF1D-F942-453E-A90B-1D7B3C0DB17D}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SPGovernmentData.Domain", "Contexts\SPGovernmentData\SPGovernmentData.Domain\SPGovernmentData.Domain.csproj", "{6B80CF1D-F942-453E-A90B-1D7B3C0DB17D}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "SPNewsData", "SPNewsData", "{6B89CCA5-31D3-4C80-A15B-7D7321349EC3}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SPNewsData.Application", "Contexts\SPNewsData\SPNewsData.Application\SPNewsData.Application.csproj", "{7E5405DA-3AB1-46A7-B1E7-B7A21FBC57BE}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SPNewsData.Data", "Contexts\SPNewsData\SPNewsData.Data\SPNewsData.Data.csproj", "{58CC0471-FA13-4D99-9EE7-20A0B953815B}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SPNewsData.Domain", "Contexts\SPNewsData\SPNewsData.Domain\SPNewsData.Domain.csproj", "{1B9333EB-6204-47EE-89D6-B2FDD1217EF9}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -85,6 +93,30 @@ Global
 		{6B80CF1D-F942-453E-A90B-1D7B3C0DB17D}.Release|Any CPU.Build.0 = Release|Any CPU
 		{6B80CF1D-F942-453E-A90B-1D7B3C0DB17D}.Release|x86.ActiveCfg = Release|Any CPU
 		{6B80CF1D-F942-453E-A90B-1D7B3C0DB17D}.Release|x86.Build.0 = Release|Any CPU
+		{7E5405DA-3AB1-46A7-B1E7-B7A21FBC57BE}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7E5405DA-3AB1-46A7-B1E7-B7A21FBC57BE}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7E5405DA-3AB1-46A7-B1E7-B7A21FBC57BE}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{7E5405DA-3AB1-46A7-B1E7-B7A21FBC57BE}.Debug|x86.Build.0 = Debug|Any CPU
+		{7E5405DA-3AB1-46A7-B1E7-B7A21FBC57BE}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7E5405DA-3AB1-46A7-B1E7-B7A21FBC57BE}.Release|Any CPU.Build.0 = Release|Any CPU
+		{7E5405DA-3AB1-46A7-B1E7-B7A21FBC57BE}.Release|x86.ActiveCfg = Release|Any CPU
+		{7E5405DA-3AB1-46A7-B1E7-B7A21FBC57BE}.Release|x86.Build.0 = Release|Any CPU
+		{58CC0471-FA13-4D99-9EE7-20A0B953815B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{58CC0471-FA13-4D99-9EE7-20A0B953815B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{58CC0471-FA13-4D99-9EE7-20A0B953815B}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{58CC0471-FA13-4D99-9EE7-20A0B953815B}.Debug|x86.Build.0 = Debug|Any CPU
+		{58CC0471-FA13-4D99-9EE7-20A0B953815B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{58CC0471-FA13-4D99-9EE7-20A0B953815B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{58CC0471-FA13-4D99-9EE7-20A0B953815B}.Release|x86.ActiveCfg = Release|Any CPU
+		{58CC0471-FA13-4D99-9EE7-20A0B953815B}.Release|x86.Build.0 = Release|Any CPU
+		{1B9333EB-6204-47EE-89D6-B2FDD1217EF9}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1B9333EB-6204-47EE-89D6-B2FDD1217EF9}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1B9333EB-6204-47EE-89D6-B2FDD1217EF9}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{1B9333EB-6204-47EE-89D6-B2FDD1217EF9}.Debug|x86.Build.0 = Debug|Any CPU
+		{1B9333EB-6204-47EE-89D6-B2FDD1217EF9}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1B9333EB-6204-47EE-89D6-B2FDD1217EF9}.Release|Any CPU.Build.0 = Release|Any CPU
+		{1B9333EB-6204-47EE-89D6-B2FDD1217EF9}.Release|x86.ActiveCfg = Release|Any CPU
+		{1B9333EB-6204-47EE-89D6-B2FDD1217EF9}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -94,6 +126,10 @@ Global
 		{18BA0CFD-094D-4527-AE82-B2CD3B33B1EC} = {20D84849-388B-4F85-899F-BD2B5749D833}
 		{2CB72576-2AC4-4777-841C-4A850682A850} = {20D84849-388B-4F85-899F-BD2B5749D833}
 		{6B80CF1D-F942-453E-A90B-1D7B3C0DB17D} = {20D84849-388B-4F85-899F-BD2B5749D833}
+		{6B89CCA5-31D3-4C80-A15B-7D7321349EC3} = {BA9B3AB7-4E12-4459-BDD9-40B2E694F790}
+		{7E5405DA-3AB1-46A7-B1E7-B7A21FBC57BE} = {6B89CCA5-31D3-4C80-A15B-7D7321349EC3}
+		{58CC0471-FA13-4D99-9EE7-20A0B953815B} = {6B89CCA5-31D3-4C80-A15B-7D7321349EC3}
+		{1B9333EB-6204-47EE-89D6-B2FDD1217EF9} = {6B89CCA5-31D3-4C80-A15B-7D7321349EC3}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {B705A2F0-0645-4005-B755-B512FBA7ECD0}

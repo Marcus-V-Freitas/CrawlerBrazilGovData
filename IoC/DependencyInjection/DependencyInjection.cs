@@ -2,12 +2,12 @@
 using Core.Cache.Interfaces;
 using Core.Configuration;
 using IoC.DependencyInjection.SPGovernmentDataDependencies;
+using IoC.DependencyInjection.SPNewsDataDependencies;
 using IoC.Middlewares;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;
-using SPGovernmentData.Application.Entities.Mappings;
 using System.Net.Http;
 
 namespace IoC.DependencyInjection
@@ -16,9 +16,6 @@ namespace IoC.DependencyInjection
     {
         public static IServiceCollection AddInfrastructure(this IServiceCollection services, IConfiguration configuration)
         {
-            //AutoMapper
-            services.AddAutoMapper(typeof(DomainMappingProfile));
-
             //Exception
             services.AddTransient<GlobalExceptionHandlerMiddleware>();
 
@@ -28,6 +25,9 @@ namespace IoC.DependencyInjection
 
             //SPGovernmentData
             services.AddSPGovernmentData(configuration);
+
+            //SPNewsData
+            services.AddSPNewsData(configuration);
 
             //JSON settings
             JsonConvert.DefaultSettings = () => new JsonSerializerSettings

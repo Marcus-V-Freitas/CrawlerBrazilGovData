@@ -1,5 +1,4 @@
 ﻿using Core.Web.Entities;
-using HtmlAgilityPack;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System;
@@ -35,7 +34,7 @@ namespace Core.Common
             return Regex.Replace(text, @"\r\n?|\n|[ ]{2,}", "").ToUpper().Replace("LER MAIS", string.Empty).Trim();
         }
 
-        public static async Task<string> GetResponseHtmlAsync(this HttpClient httpClient, string url)
+        public static async Task<HtmlString> GetResponseHtmlAsync(this HttpClient httpClient, string url)
         {
             try
             {
@@ -43,18 +42,18 @@ namespace Core.Common
 
                 if (responseMessage.IsSuccessStatusCode)
                 {
-                    return await responseMessage.Content.ReadAsStringAsync();
+                    return HtmlString.Instance(await responseMessage.Content.ReadAsStringAsync());
                 }
                 else
                 {
                     Console.WriteLine($"Error occurred, the status code is: {responseMessage.StatusCode}");
-                    return string.Empty;
+                    return HtmlString.Instance();
                 }
             }
             catch (Exception ex)
             {
                 Console.WriteLine(ex.Message);
-                return string.Empty;
+                return HtmlString.Instance();
             }
         }
 
@@ -66,85 +65,10 @@ namespace Core.Common
             }
         }
 
-        public static HtmlDocument CreateHtmlDocument(this string htmlResponse)
-        {
-            HtmlDocument doc = new HtmlDocument();
-            doc.OptionAutoCloseOnEnd = true;
-            if (!string.IsNullOrEmpty(htmlResponse))
-            {
-                doc.LoadHtml(htmlResponse);
-            }
-            return doc;
-        }
-
         public static string GetValueByKey(this Dictionary<string, string> dictionary, string key)
         {
             dictionary.TryGetValue(key, out string value);
             return value;
-        }
-
-        public static Dictionary<string, string> ExtractTableInfo(this string html, string nodeXPath, bool normalize = true)
-        {
-            Dictionary<string, string> extracted = new Dictionary<string, string>();
-            var tableNode = html.CreateHtmlDocument().DocumentNode.SelectSingleNode(nodeXPath);
-
-            if (tableNode != null)
-            {
-                var thNodes = tableNode.SelectNodes(".//th");
-                var tdNodes = tableNode.SelectNodes(".//td");
-
-                List<string> terms = new List<string>() { "CAMPO", "VALOR" };
-                var fieldsRemove = thNodes.Where(x => terms.Contains(x.InnerText.NormalizeString())).ToList();
-
-                if (fieldsRemove.Any())
-                {
-                    foreach (var fieldRemove in fieldsRemove)
-                    {
-                        thNodes.Remove(fieldRemove);
-                    }
-                }
-
-                if (thNodes != null && tdNodes != null && thNodes.Count() == tdNodes.Count())
-                {
-                    foreach (int indice in Enumerable.Range(0, thNodes.Count))
-                    {
-                        string key = thNodes[indice].InnerText;
-                        string value = tdNodes[indice].InnerText;
-                        extracted.Add(normalize ? key.NormalizeString() : key, normalize ? value.NormalizeString() : value);
-                    }
-                }
-            }
-            return extracted;
-        }
-
-        public static string ExtractSingleInfo(this string html, string nodeXPath, bool normalize = true)
-        {
-            HtmlDocument doc = html.CreateHtmlDocument();
-            HtmlNode node = doc.DocumentNode.SelectSingleNode(nodeXPath);
-
-            if (node != null)
-            {
-                return normalize ? node.InnerText.NormalizeString() : node.InnerText;
-            }
-
-            return string.Empty;
-        }
-
-        public static string ExtractSingleInfoAttribute(this string html, string nodeXPath, string attributeName, bool normalize = true)
-        {
-            HtmlDocument doc = html.CreateHtmlDocument();
-            HtmlNode node = doc.DocumentNode.SelectSingleNode(nodeXPath);
-
-            if (node != null)
-            {
-                string value = node.GetAttributeValue(attributeName, null);
-                if (!string.IsNullOrEmpty(value))
-                {
-                    return normalize ? value.NormalizeString() : value;
-                }
-            }
-
-            return string.Empty;
         }
 
         public static bool TryConvertStringToBool(this string value)
@@ -175,44 +99,6 @@ namespace Core.Common
                 return date;
             }
             return null;
-        }
-
-        public static List<string> ExtractListInfoAttributes(this string html, string nodeXPath, string attributeName, bool normalize = true)
-        {
-            List<string> infos = new List<string>();
-            HtmlDocument doc = html.CreateHtmlDocument();
-            HtmlNodeCollection nodes = doc.DocumentNode.SelectNodes(nodeXPath);
-
-            if (nodes != null)
-            {
-                foreach (var node in nodes)
-                {
-                    string value = node.GetAttributeValue(attributeName, null);
-                    if (!string.IsNullOrEmpty(value))
-                    {
-                        infos.Add(normalize ? value.NormalizeString() : value);
-                    }
-                }
-                return infos;
-            }
-            return infos;
-        }
-
-        public static List<string> ExtractListInfo(this string html, string nodeXPath, bool normalize = true)
-        {
-            List<string> infos = new List<string>();
-            HtmlDocument doc = html.CreateHtmlDocument();
-            HtmlNodeCollection nodes = doc.DocumentNode.SelectNodes(nodeXPath);
-
-            if (nodes != null)
-            {
-                foreach (var node in nodes)
-                {
-                    infos.Add(normalize ? node.InnerText.NormalizeString() : node.InnerText);
-                }
-                return infos;
-            }
-            return infos;
         }
 
         public static string GetFileNameFromUrl(this string url)

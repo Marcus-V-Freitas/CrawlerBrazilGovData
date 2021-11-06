@@ -1,16 +1,16 @@
 ﻿using Microsoft.Extensions.Diagnostics.HealthChecks;
-using MySql.Data.MySqlClient;
-using SPGovernmentData.Data.Context;
-using SPGovernmentData.Domain.Entities;
-using SPGovernmentData.Domain.Interfaces;
+using MySqlConnector;
+using SPNewsData.Data.Context;
+using SPNewsData.Domain.Entities;
+using SPNewsData.Domain.Interfaces;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace SPGovernmentData.Data.Repositories
+namespace SPNewsData.Data.Repositories
 {
     public class UrlExtractedRepository : Repository<UrlExtracted>, IUrlExtractedRepository, IHealthCheck
     {
-        public UrlExtractedRepository(SPGovernmentDataContext context) : base(context)
+        public UrlExtractedRepository(SPNewsDataContext context) : base(context)
         {
         }
 

@@ -1,6 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using SPGovernmentData.Application.Entities.Mappings;
 using SPGovernmentData.Application.Services.Implementations;
 using SPGovernmentData.Application.Services.Interfaces;
 using SPGovernmentData.Data.Context;
@@ -13,12 +14,15 @@ namespace IoC.DependencyInjection.SPGovernmentDataDependencies
     {
         public static IServiceCollection AddSPGovernmentData(this IServiceCollection services, IConfiguration configuration)
         {
+            //AutoMapper
+            services.AddAutoMapper(typeof(DomainMappingProfile));
+
             //Database
             string mySqlConnectionStr = configuration.GetConnectionString("DefaultConnection");
             services.AddDbContext<SPGovernmentDataContext>(options =>
             {
                 options.UseMySql(mySqlConnectionStr, ServerVersion.AutoDetect(mySqlConnectionStr),
-                                 mySqlOptionsAction: x => x.MigrationsAssembly("SPGovernmentData.Data"));
+                                 mySqlOptionsAction: x => x.MigrationsAssembly($"{nameof(SPGovernmentData)}.Data"));
             }, ServiceLifetime.Transient);
 
             //Repositories
@@ -31,11 +35,12 @@ namespace IoC.DependencyInjection.SPGovernmentDataDependencies
 
             //Health Check
             services.AddHealthChecks()
-                .AddCheck<TagRepository>(nameof(TagRepository))
-                .AddCheck<DatasetRepository>(nameof(DatasetRepository))
-                .AddCheck<DataSourceRepository>(nameof(DataSourceRepository))
-                .AddCheck<DataSourceAditionalInformationRepository>(nameof(DataSourceAditionalInformationRepository))
-                .AddCheck<DatasetAditionalInformationRepository>(nameof(DatasetAditionalInformationRepository));
+                .AddCheck<UrlExtractedRepository>($"{nameof(SPGovernmentData)}{nameof(UrlExtractedRepository)}")
+                .AddCheck<TagRepository>($"{nameof(SPGovernmentData)}{ nameof(TagRepository)}")
+                .AddCheck<DatasetRepository>($"{nameof(SPGovernmentData)}{nameof(DatasetRepository)}")
+                .AddCheck<DataSourceRepository>($"{nameof(SPGovernmentData)}{nameof(DataSourceRepository)}")
+                .AddCheck<DataSourceAditionalInformationRepository>($"{nameof(SPGovernmentData)}{nameof(DataSourceAditionalInformationRepository)}")
+                .AddCheck<DatasetAditionalInformationRepository>($"{nameof(SPGovernmentData)}{nameof(DatasetAditionalInformationRepository)}");
 
             //Services
             services.AddScoped<IExtractUrlsService, ExtractUrlsService>();
