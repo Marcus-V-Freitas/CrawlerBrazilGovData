@@ -135,5 +135,15 @@ namespace Core.Web.Entities
             }
             return infos;
         }
+
+        public HtmlNodeCollection ExtractListNodes(string nodeXPath)
+        {
+            return CreateHtmlDocument().DocumentNode.SelectNodes(nodeXPath);
+        }
+
+        public HtmlNode ExtractSingleNode(string nodeXPath)
+        {
+            return CreateHtmlDocument().DocumentNode.SelectSingleNode(nodeXPath);
+        }
     }
 }

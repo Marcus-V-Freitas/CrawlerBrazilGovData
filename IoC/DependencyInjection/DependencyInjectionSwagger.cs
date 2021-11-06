@@ -9,6 +9,8 @@ namespace IoC.DependencyInjection
         {
             services.AddSwaggerGen(opt =>
             {
+                opt.CustomSchemaIds(type => type.ToString());
+
                 //Include XML Controller Documentation
                 if (!string.IsNullOrEmpty(xmlPath))
                 {

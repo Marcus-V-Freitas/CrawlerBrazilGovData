@@ -2,6 +2,8 @@
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using SPNewsData.Application.Entities.Mappings;
+using SPNewsData.Application.Services.Implementations;
+using SPNewsData.Application.Services.Interfaces;
 using SPNewsData.Data.Context;
 using SPNewsData.Data.Repositories;
 using SPNewsData.Domain.Interfaces;
@@ -28,7 +30,10 @@ namespace IoC.DependencyInjection.SPNewsDataDependencies
 
             //Health Check
             services.AddHealthChecks()
-                .AddCheck<UrlExtractedRepository>($"{nameof(SPGovernmentData)}{nameof(UrlExtractedRepository)}");
+                .AddCheck<UrlExtractedRepository>($"{nameof(SPNewsData)}{nameof(UrlExtractedRepository)}");
+
+            //Services
+            services.AddScoped<IExtractUrlsService, ExtractUrlsService>();
 
             return services;
         }

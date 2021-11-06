@@ -4,29 +4,36 @@
         <name>CrawlerBrazilGovData</name>
     </assembly>
     <members>
-        <member name="T:CrawlerBrazilGovData.Controllers.ExtractUrlsController">
+        <member name="T:CrawlerBrazilGovData.Controllers.SPGovernmentController">
             <summary>
-            API endpoint (ExtractUrls)
+            API endpoint
             </summary>
         </member>
-        <member name="M:CrawlerBrazilGovData.Controllers.ExtractUrlsController.ExtractUrlsBySearch(System.String)">
+        <member name="M:CrawlerBrazilGovData.Controllers.SPGovernmentController.GovExtractUrlsBySearch(System.String)">
             <summary>
             Extract all url by search term
             </summary>
             <param name="search"> search term </param>
             <returns> Array Urls Found </returns>
         </member>
-        <member name="T:CrawlerBrazilGovData.Controllers.ParserController">
-            <summary>
-            API endpoint (Parser)
-            </summary>
-        </member>
-        <member name="M:CrawlerBrazilGovData.Controllers.ParserController.ParserBySearch(System.String)">
+        <member name="M:CrawlerBrazilGovData.Controllers.SPGovernmentController.GovParserBySearch(System.String)">
             <summary>
             Parser all infos extracted in urls by search term
             </summary>
             <param name="search"> search term </param>
             <returns> Array Datasets Parsed </returns>
+        </member>
+        <member name="T:CrawlerBrazilGovData.Controllers.SPNewsDataController">
+            <summary>
+            API endpoint
+            </summary>
+        </member>
+        <member name="M:CrawlerBrazilGovData.Controllers.SPNewsDataController.NewsExtractUrlsBySearch(System.String)">
+            <summary>
+            Extract all url by search term
+            </summary>
+            <param name="search"> search term </param>
+            <returns> Array Urls Found </returns>
         </member>
     </members>
 </doc>

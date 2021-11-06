@@ -2,8 +2,7 @@
 {
     public class Configs
     {
-        public Bootstrap Bootstrap { get; set; }
-
-        public Parser Parser { get; set; }
+        public Context SPGovernmentData { get; set; }
+        public Context SPNewsData { get; set; }
     }
 }

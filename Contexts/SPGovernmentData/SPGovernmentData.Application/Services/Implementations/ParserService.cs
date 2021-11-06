@@ -51,7 +51,7 @@ namespace SPGovernmentData.Application.Services.Implementations
             _extractedRepository = extractedRepository;
             _SQSHelper = sQSHelper;
             _S3Helper = s3Helper;
-            _parser = options.Value.Parser;
+            _parser = options.Value.SPGovernmentData.Parser;
             _mapper = mapper;
         }
 

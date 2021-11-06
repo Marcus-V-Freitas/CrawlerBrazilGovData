@@ -21,7 +21,7 @@ namespace SPGovernmentData.Application.Services.Implementations
 {
     public class ExtractUrlsService : GovDataUtils, IExtractUrlsService
     {
-        private readonly Configs _configs;
+        private readonly Bootstrap _bootstrap;
         private readonly HttpClient _client;
         private readonly IMapper _mapper;
         private readonly ISQSHelper _SQSHelper;
@@ -32,7 +32,7 @@ namespace SPGovernmentData.Application.Services.Implementations
             _urlExtractedRepository = urlExtractedRepository;
             _client = client;
             _SQSHelper = sQSHelper;
-            _configs = options.Value;
+            _bootstrap = options.Value.SPGovernmentData.Bootstrap;
             _mapper = mapper;
         }
 
@@ -40,8 +40,7 @@ namespace SPGovernmentData.Application.Services.Implementations
         {
             List<UrlExtractedDTO> extratedUrlsDTO = new();
             HtmlString htmlResponse = await _client.GetResponseHtmlAsync(string.Format(_baseUrlGov.CombineUrl(_searchDatasets), search));
-            HtmlDocument doc = htmlResponse.CreateHtmlDocument();
-            HtmlNodeCollection urlNodes = doc.DocumentNode.SelectNodes(".//div[@id='content']//li[@class='dataset-item']//h3[@class='dataset-heading']/a");
+            HtmlNodeCollection urlNodes = htmlResponse.ExtractListNodes(".//div[@id='content']//li[@class='dataset-item']//h3[@class='dataset-heading']/a");
 
             if (urlNodes == null || !urlNodes.Any())
             {
@@ -82,7 +81,7 @@ namespace SPGovernmentData.Application.Services.Implementations
         {
             string messageId = string.Empty;
 
-            if (_configs.Bootstrap.SQSSave)
+            if (_bootstrap.SQSSave)
             {
                 var queue = await _SQSHelper.CreateQueue(search);
 
@@ -103,7 +102,7 @@ namespace SPGovernmentData.Application.Services.Implementations
         private async Task<UrlExtracted> SaveMysql(string search, UrlExtracted urlExtracted)
         {
             UrlExtracted urlExtractedInserted = new();
-            if (_configs.Bootstrap.MysqlSave)
+            if (_bootstrap.MysqlSave)
             {
                 var urlExtractedPreviousInserted = await _urlExtractedRepository.FindAsync(x => x.Search == search && x.Title == urlExtracted.Title);
 
