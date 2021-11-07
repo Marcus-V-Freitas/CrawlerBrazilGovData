@@ -9,6 +9,8 @@ namespace SPNewsData.Application.Entities.Mappings
         public DomainMappingProfile()
         {
             CreateMap<UrlExtracted, UrlExtractedDTO>().ReverseMap();
+            CreateMap<Subject, SubjectDTO>().ReverseMap();
+            CreateMap<GovNews, GovNewsDTO>().ReverseMap();
         }
     }
 }

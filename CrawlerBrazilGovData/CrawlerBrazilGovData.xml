@@ -35,5 +35,12 @@
             <param name="search"> search term </param>
             <returns> Array Urls Found </returns>
         </member>
+        <member name="M:CrawlerBrazilGovData.Controllers.SPNewsDataController.NewsParserBySearch(System.String)">
+            <summary>
+            Parser all infos extracted in urls by search term
+            </summary>
+            <param name="search"> search term </param>
+            <returns> Array News Parsed </returns>
+        </member>
     </members>
 </doc>

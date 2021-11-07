@@ -82,19 +82,37 @@ namespace Core.Common
             return result;
         }
 
+        public static string TryRemoveTextBeforeValue(this string text, string value, bool returnEmptyIfNull = true)
+        {
+            string input = text;
+
+            if (string.IsNullOrEmpty(input))
+            {
+                return returnEmptyIfNull ? string.Empty : input;
+            }
+
+            int index = text.IndexOf(value);
+            if (index >= 0)
+            {
+                input = input[(index + 1)..];
+            }
+
+            return input;
+        }
+
         public static DateTime? TryConvertDatetime(this string value, string format = "dd/MM/yyyy", string culture = "")
         {
             CultureInfo cultureInfo;
             if (string.IsNullOrEmpty(culture))
             {
-                cultureInfo = CultureInfo.InvariantCulture;
+                cultureInfo = CultureInfo.GetCultureInfo("en-US");
             }
             else
             {
                 cultureInfo = CultureInfo.GetCultureInfo(culture);
             }
 
-            if (DateTime.TryParseExact(value, format, cultureInfo, DateTimeStyles.None, out DateTime date))
+            if (DateTime.TryParseExact(value, format, cultureInfo, DateTimeStyles.AllowWhiteSpaces, out DateTime date))
             {
                 return date;
             }

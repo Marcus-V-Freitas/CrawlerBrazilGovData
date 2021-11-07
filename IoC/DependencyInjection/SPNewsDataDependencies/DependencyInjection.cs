@@ -27,13 +27,18 @@ namespace IoC.DependencyInjection.SPNewsDataDependencies
 
             //Repositories
             services.AddScoped<IUrlExtractedRepository, UrlExtractedRepository>();
+            services.AddScoped<IGovNewsRepository, GovNewsRepository>();
+            services.AddScoped<ISubjectRepository, SubjectRepository>();
 
             //Health Check
             services.AddHealthChecks()
-                .AddCheck<UrlExtractedRepository>($"{nameof(SPNewsData)}{nameof(UrlExtractedRepository)}");
+                .AddCheck<UrlExtractedRepository>($"{nameof(SPNewsData)}{nameof(UrlExtractedRepository)}")
+                .AddCheck<GovNewsRepository>($"{nameof(SPNewsData)}{nameof(GovNewsRepository)}")
+                .AddCheck<SubjectRepository>($"{nameof(SPNewsData)}{nameof(SubjectRepository)}");
 
             //Services
             services.AddScoped<IExtractUrlsService, ExtractUrlsService>();
+            services.AddScoped<IParserService, ParseService>();
 
             return services;
         }

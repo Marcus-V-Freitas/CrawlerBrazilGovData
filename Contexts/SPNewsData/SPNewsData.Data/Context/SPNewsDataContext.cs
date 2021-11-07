@@ -11,6 +11,8 @@ namespace SPNewsData.Data.Context
         }
 
         public DbSet<UrlExtracted> UrlExtracteds { get; set; }
+        public DbSet<GovNews> GovNews { get; set; }
+        public DbSet<Subject> Subjects { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {

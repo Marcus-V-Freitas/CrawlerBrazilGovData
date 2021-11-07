@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
+using SPGovernmentData.Application.Entities.DTOs;
 using SPGovernmentData.Application.Services.Interfaces;
 using Swashbuckle.AspNetCore.Annotations;
 using System.Collections.Generic;
@@ -33,7 +34,7 @@ namespace CrawlerBrazilGovData.Controllers
         /// <param name="search"> search term </param>
         /// <returns> Array Urls Found </returns>
         [HttpPost("Bootstrap", Name = nameof(GovExtractUrlsBySearch))]
-        [SwaggerResponse((int)HttpStatusCode.OK, Description = "Returns 200", Type = typeof(IEnumerable<SPGovernmentData.Application.Entities.DTOs.UrlExtractedDTO>))]
+        [SwaggerResponse((int)HttpStatusCode.OK, Description = "Returns 200", Type = typeof(IEnumerable<UrlExtractedDTO>))]
         [SwaggerResponse((int)HttpStatusCode.NotFound, Description = "Missing Urls objects")]
         [SwaggerResponse((int)HttpStatusCode.InternalServerError, Description = "Unexpected error")]
         public async Task<IActionResult> GovExtractUrlsBySearch([FromBody] string search)
@@ -59,7 +60,7 @@ namespace CrawlerBrazilGovData.Controllers
         /// <param name="search"> search term </param>
         /// <returns> Array Datasets Parsed </returns>
         [HttpPost("Parser", Name = nameof(GovParserBySearch))]
-        [SwaggerResponse((int)HttpStatusCode.OK, Description = "Returns 200", Type = typeof(IEnumerable<SPGovernmentData.Application.Entities.DTOs.DatasetDTO>))]
+        [SwaggerResponse((int)HttpStatusCode.OK, Description = "Returns 200", Type = typeof(IEnumerable<DatasetDTO>))]
         [SwaggerResponse((int)HttpStatusCode.NotFound, Description = "Missing Datasets objects")]
         [SwaggerResponse((int)HttpStatusCode.InternalServerError, Description = "Unexpected error")]
         public async Task<IActionResult> GovParserBySearch([FromBody] string search)
