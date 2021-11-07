@@ -16,10 +16,9 @@ namespace Core.Common
     {
         public static string CombineUrl(this string baseUrl, string relativeUrl)
         {
-            UriBuilder baseUri = new UriBuilder(baseUrl);
-            Uri newUri;
+            UriBuilder baseUri = new(baseUrl);
 
-            if (Uri.TryCreate(baseUri.Uri, relativeUrl, out newUri))
+            if (Uri.TryCreate(baseUri.Uri, relativeUrl, out Uri newUri))
             {
                 return newUri.ToString();
             }
@@ -100,14 +99,16 @@ namespace Core.Common
             return input;
         }
 
+        public static bool ListIsNullOrEmpty<T>(this List<T> collection)
+        {
+            return collection == null || !collection.Any();
+        }
+
         public static DateTime? TryConvertDatetime(this string value, string format = "dd/MM/yyyy", string culture = "")
         {
-            CultureInfo cultureInfo;
-            if (string.IsNullOrEmpty(culture))
-            {
-                cultureInfo = CultureInfo.GetCultureInfo("en-US");
-            }
-            else
+            CultureInfo cultureInfo = CultureInfo.InvariantCulture;
+
+            if (!string.IsNullOrEmpty(culture))
             {
                 cultureInfo = CultureInfo.GetCultureInfo(culture);
             }

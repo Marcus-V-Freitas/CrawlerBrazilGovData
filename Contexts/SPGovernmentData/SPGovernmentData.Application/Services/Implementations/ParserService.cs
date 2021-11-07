@@ -3,11 +3,11 @@ using AWSHelpers.S3.Interfaces;
 using AWSHelpers.SQS.Interfaces;
 using Core.Common;
 using Core.Configuration;
+using Core.Utils;
 using Core.Web.Entities;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Options;
 using SPGovernmentData.Application.Entities.DTOs;
-using SPGovernmentData.Application.Entities.Utils;
 using SPGovernmentData.Application.Services.Interfaces;
 using SPGovernmentData.Domain.Entities;
 using SPGovernmentData.Domain.Interfaces;
@@ -54,6 +54,10 @@ namespace SPGovernmentData.Application.Services.Implementations
             _parser = options.Value.SPGovernmentData.Parser;
             _mapper = mapper;
         }
+
+        protected override string _baseUrlGov => "http://dados.prefeitura.sp.gov.br";
+
+        protected override string _searchQueryString => "pt_PT/dataset?q={0}&sort=score+desc%2C+metadata_modified+desc";
 
         public async Task<List<DatasetDTO>> ParserUrlToDataset(string search)
         {

@@ -7,7 +7,7 @@ namespace Core.Web.Entities
 {
     public class HtmlString
     {
-        private string _html { get; set; }
+        private readonly string _html;
 
         private HtmlString(string html)
         {

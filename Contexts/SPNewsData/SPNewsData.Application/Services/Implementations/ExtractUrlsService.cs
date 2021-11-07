@@ -1,11 +1,11 @@
 ﻿using AutoMapper;
 using Core.Common;
 using Core.Configuration;
+using Core.Utils;
 using Core.Web.Entities;
 using HtmlAgilityPack;
 using Microsoft.Extensions.Options;
 using SPNewsData.Application.Entities.DTOs;
-using SPNewsData.Application.Entities.Utils;
 using SPNewsData.Application.Services.Interfaces;
 using SPNewsData.Domain.Entities;
 using SPNewsData.Domain.Interfaces;
@@ -31,6 +31,9 @@ namespace SPNewsData.Application.Services.Implementations
             _bootstrap = options.Value.SPNewsData.Bootstrap;
             _mapper = mapper;
         }
+
+        protected override string _baseUrlGov => "https://www.saopaulo.sp.gov.br";
+        protected override string _searchQueryString => "/page/{0}/?s={1}";
 
         public async Task<List<UrlExtractedDTO>> ExtractUrlsBySearch(string search)
         {
@@ -64,7 +67,7 @@ namespace SPNewsData.Application.Services.Implementations
         private async Task<List<UrlExtractedDTO>> GetUrlsByPageNumber(string search, int pageNumber, bool extractPageTotal = false)
         {
             List<UrlExtractedDTO> extratedUrlsDTO = new();
-            HtmlString htmlResponse = await _client.GetResponseHtmlAsync(string.Format(_baseUrlGov.CombineUrl(_searchDatasets), pageNumber, search));
+            HtmlString htmlResponse = await _client.GetResponseHtmlAsync(string.Format(_baseUrlGov.CombineUrl(_searchQueryString), pageNumber, search));
             HtmlNodeCollection urlNodes = htmlResponse.ExtractListNodes(".//div[@class='content']//article//h3/a");
 
             if (extractPageTotal)

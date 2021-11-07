@@ -22,16 +22,18 @@ namespace SPNewsData.Application.Services.Implementations
         private readonly IMapper _mapper;
         private readonly IUrlExtractedRepository _extractedRepository;
         private readonly IGovNewsRepository _govNewsRepository;
+        private readonly ISubjectRepository _subjectRepository;
 
         public ParseService(HttpClient client, IMapper mapper,
-                            IUrlExtractedRepository extractedRepository,
-                            IOptions<Configs> options, IGovNewsRepository govNewsRepository)
+                            IUrlExtractedRepository extractedRepository, IOptions<Configs> options,
+                             IGovNewsRepository govNewsRepository, ISubjectRepository subjectRepository)
         {
             _client = client;
             _mapper = mapper;
             _extractedRepository = extractedRepository;
             _parser = options.Value.SPNewsData.Parser;
             _govNewsRepository = govNewsRepository;
+            _subjectRepository = subjectRepository;
         }
 
         public async Task<List<GovNewsDTO>> ParserUrlToGovNews(string search)
@@ -39,7 +41,7 @@ namespace SPNewsData.Application.Services.Implementations
             List<GovNewsDTO> govNewsDTOs = new();
             List<UrlExtractedDTO> urls = await GetUrlsParser(search);
 
-            if (urls != null && urls.Any())
+            if (!urls.ListIsNullOrEmpty())
             {
                 foreach (UrlExtractedDTO url in urls)
                 {
@@ -57,7 +59,7 @@ namespace SPNewsData.Application.Services.Implementations
         private async Task<GovNewsDTO> ExtractGeneralInfo(HtmlString html)
         {
             GovNewsDTO govNews = await ExtractGovNewInformation(html);
-            //await ExtractSubjectsInformation(html, govNews.Id);
+            govNews.Subjects.AddRangeIfNotNullOrEmpty(await ExtractSubjectsInformation(html, govNews.Id));
             return govNews;
         }
 
@@ -87,7 +89,17 @@ namespace SPNewsData.Application.Services.Implementations
         private async Task<List<SubjectDTO>> ExtractSubjectsInformation(HtmlString html, int? govNewId)
         {
             List<SubjectDTO> subjectDTOs = new();
+            List<string> names = html.ExtractListInfo(".//section/footer/div[@class='categories']/a[@class='category']");
 
+            if (!names.ListIsNullOrEmpty())
+            {
+                foreach (var name in names)
+                {
+                    Subject subject = new(name, govNewId);
+                    var subjectInserted = await _subjectRepository.InsertAsync(subject);
+                    subjectDTOs.Add(_mapper.Map<SubjectDTO>(subjectInserted));
+                }
+            }
             return subjectDTOs;
         }
 

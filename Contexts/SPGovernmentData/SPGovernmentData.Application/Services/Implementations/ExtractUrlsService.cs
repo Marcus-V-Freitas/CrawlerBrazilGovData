@@ -2,12 +2,12 @@
 using AWSHelpers.SQS.Interfaces;
 using Core.Common;
 using Core.Configuration;
+using Core.Utils;
 using Core.Web.Entities;
 using HtmlAgilityPack;
 using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
 using SPGovernmentData.Application.Entities.DTOs;
-using SPGovernmentData.Application.Entities.Utils;
 using SPGovernmentData.Application.Services.Interfaces;
 using SPGovernmentData.Domain.Entities;
 using SPGovernmentData.Domain.Interfaces;
@@ -36,10 +36,14 @@ namespace SPGovernmentData.Application.Services.Implementations
             _mapper = mapper;
         }
 
+        protected override string _baseUrlGov => "http://dados.prefeitura.sp.gov.br";
+
+        protected override string _searchQueryString => "pt_PT/dataset?q={0}&sort=score+desc%2C+metadata_modified+desc";
+
         public async Task<List<UrlExtractedDTO>> ExtractUrlsBySearch(string search)
         {
             List<UrlExtractedDTO> extratedUrlsDTO = new();
-            HtmlString htmlResponse = await _client.GetResponseHtmlAsync(string.Format(_baseUrlGov.CombineUrl(_searchDatasets), search));
+            HtmlString htmlResponse = await _client.GetResponseHtmlAsync(string.Format(_baseUrlGov.CombineUrl(_searchQueryString), search));
             HtmlNodeCollection urlNodes = htmlResponse.ExtractListNodes(".//div[@id='content']//li[@class='dataset-item']//h3[@class='dataset-heading']/a");
 
             if (urlNodes == null || !urlNodes.Any())
