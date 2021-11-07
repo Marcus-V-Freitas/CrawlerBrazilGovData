@@ -64,6 +64,14 @@ namespace Core.Common
             }
         }
 
+        public static void AddIfNotNull<T>(this List<T> source, T type)
+        {
+            if (type != null)
+            {
+                source.Add(type);
+            }
+        }
+
         public static string GetValueByKey(this Dictionary<string, string> dictionary, string key)
         {
             dictionary.TryGetValue(key, out string value);

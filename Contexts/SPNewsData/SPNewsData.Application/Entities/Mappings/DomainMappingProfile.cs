@@ -11,6 +11,7 @@ namespace SPNewsData.Application.Entities.Mappings
             CreateMap<UrlExtracted, UrlExtractedDTO>().ReverseMap();
             CreateMap<Subject, SubjectDTO>().ReverseMap();
             CreateMap<GovNews, GovNewsDTO>().ReverseMap();
+            CreateMap<Evidence, EvidenceDTO>().ReverseMap();
         }
     }
 }

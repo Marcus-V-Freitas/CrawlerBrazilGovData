@@ -6,6 +6,7 @@ using Microsoft.Extensions.Options;
 using SPNewsData.Application.Entities.DTOs;
 using SPNewsData.Application.Services.Interfaces;
 using SPNewsData.Domain.Entities;
+using SPNewsData.Domain.Enums;
 using SPNewsData.Domain.Interfaces;
 using System;
 using System.Collections.Generic;
@@ -23,10 +24,11 @@ namespace SPNewsData.Application.Services.Implementations
         private readonly IUrlExtractedRepository _extractedRepository;
         private readonly IGovNewsRepository _govNewsRepository;
         private readonly ISubjectRepository _subjectRepository;
+        private readonly IEvidenceRepository _evidenceRepository;
 
         public ParseService(HttpClient client, IMapper mapper,
                             IUrlExtractedRepository extractedRepository, IOptions<Configs> options,
-                             IGovNewsRepository govNewsRepository, ISubjectRepository subjectRepository)
+                             IGovNewsRepository govNewsRepository, ISubjectRepository subjectRepository, IEvidenceRepository evidenceRepository)
         {
             _client = client;
             _mapper = mapper;
@@ -34,6 +36,7 @@ namespace SPNewsData.Application.Services.Implementations
             _parser = options.Value.SPNewsData.Parser;
             _govNewsRepository = govNewsRepository;
             _subjectRepository = subjectRepository;
+            _evidenceRepository = evidenceRepository;
         }
 
         public async Task<List<GovNewsDTO>> ParserUrlToGovNews(string search)
@@ -48,38 +51,45 @@ namespace SPNewsData.Application.Services.Implementations
                     HtmlString html = await _client.GetResponseHtmlAsync(url.Url);
                     if (!html.IsNullOrEmpty)
                     {
-                        govNewsDTOs.Add(await ExtractGeneralInfo(html));
+                        govNewsDTOs.AddIfNotNull(await ExtractGeneralInfo(html, url.Url, search));
                     }
                 }
             }
-
             return govNewsDTOs;
         }
 
-        private async Task<GovNewsDTO> ExtractGeneralInfo(HtmlString html)
+        private async Task<GovNewsDTO> ExtractGeneralInfo(HtmlString html, string url, string search)
         {
-            GovNewsDTO govNews = await ExtractGovNewInformation(html);
+            GovNewsDTO govNews = await ExtractGovNewInformation(html, url, search);
+            govNews.Evidences.AddIfNotNull(await SaveEvidences(html, govNews.Id));
             govNews.Subjects.AddRangeIfNotNullOrEmpty(await ExtractSubjectsInformation(html, govNews.Id));
             return govNews;
         }
 
-        private async Task<GovNewsDTO> ExtractGovNewInformation(HtmlString html)
+        private async Task<EvidenceDTO> SaveEvidences(HtmlString html, int? govNewId)
+        {
+            Evidence evidence = new(html.ToHtmlString, EvidenceType.HTML, govNewId);
+            var evidenceInserted = await _evidenceRepository.InsertAsync(evidence);
+            return _mapper.Map<EvidenceDTO>(evidenceInserted);
+        }
+
+        private async Task<GovNewsDTO> ExtractGovNewInformation(HtmlString html, string url, string search)
         {
             string title = html.ExtractSingleInfo(".//header[@class='article-header']/h1[@class='title']");
             string subtitle = html.ExtractSingleInfo(".//section/header[@class='article-header']/p");
-            string[] infos = html.ExtractSingleInfo(".//section/header/div[@class='meta']/span[@class='date']").Split('|');
+            string[] infos = html.ExtractSingleInfo(".//section/header//span[@class='date']").Split('|');
             string content = html.ExtractSingleInfo(".//section/article[@class='article-main']");
             DateTime? publicationDate = null;
             string source = null;
 
             if (infos != null && infos.Count() == 2)
             {
-                string date = infos[0].TryRemoveTextBeforeValue(" ").Replace("H", "");
-                publicationDate = date.TryConvertDatetime("d/MM/yyyy - HHmm");
+                string date = infos[0].TryRemoveTextBeforeValue(" ").Replace("H", ":");
+                publicationDate = date.TryConvertDatetime("d/MM/yyyy - H:mm");
                 source = infos[1];
             }
 
-            GovNews govNews = new(title, subtitle, publicationDate, source, content);
+            GovNews govNews = new(title, subtitle, publicationDate, source, content, url, search);
             var govNewInserted = await _govNewsRepository.InsertAsync(govNews);
             GovNewsDTO govNewsDTO = _mapper.Map<GovNewsDTO>(govNewInserted);
 
@@ -97,7 +107,7 @@ namespace SPNewsData.Application.Services.Implementations
                 {
                     Subject subject = new(name, govNewId);
                     var subjectInserted = await _subjectRepository.InsertAsync(subject);
-                    subjectDTOs.Add(_mapper.Map<SubjectDTO>(subjectInserted));
+                    subjectDTOs.AddIfNotNull(_mapper.Map<SubjectDTO>(subjectInserted));
                 }
             }
             return subjectDTOs;

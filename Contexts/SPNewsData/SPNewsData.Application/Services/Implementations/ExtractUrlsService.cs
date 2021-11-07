@@ -88,7 +88,7 @@ namespace SPNewsData.Application.Services.Implementations
                 if (urlExtractedInserted != null)
                 {
                     var extratedUrls = _mapper.Map<UrlExtractedDTO>(urlExtractedInserted);
-                    extratedUrlsDTO.Add(extratedUrls);
+                    extratedUrlsDTO.AddIfNotNull(extratedUrls);
                 }
             }
 
