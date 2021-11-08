@@ -1,6 +1,8 @@
 ﻿using Core.Common;
 using HtmlAgilityPack;
+using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 
 namespace Core.Web.Entities
@@ -8,10 +10,12 @@ namespace Core.Web.Entities
     public class HtmlString
     {
         private readonly string _html;
+        private readonly Guid _fileNameGuid;
 
         private HtmlString(string html)
         {
             _html = html;
+            _fileNameGuid = Guid.NewGuid();
         }
 
         public static HtmlString Instance(string html = "")
@@ -20,6 +24,8 @@ namespace Core.Web.Entities
         }
 
         public string ToHtmlString { get => _html; }
+
+        public string FileNameGuid { get => $"{_fileNameGuid}.html"; }
 
         public bool IsNullOrEmpty { get => string.IsNullOrEmpty(_html); }
 
@@ -144,6 +150,14 @@ namespace Core.Web.Entities
         public HtmlNode ExtractSingleNode(string nodeXPath)
         {
             return CreateHtmlDocument().DocumentNode.SelectSingleNode(nodeXPath);
+        }
+
+        public bool SaveHtml(string folder)
+        {
+            folder.CreateDirectoryIfNotExists();
+            string fullPath = @$"{folder}\\{FileNameGuid}";
+            File.WriteAllText(fullPath, _html);
+            return File.Exists(fullPath);
         }
     }
 }

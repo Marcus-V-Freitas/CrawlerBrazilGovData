@@ -164,7 +164,7 @@ namespace Core.Common
 
                     if (folderTypeFile)
                     {
-                        folderType = (string.IsNullOrEmpty(extension) ? "Others" : extension);
+                        folderType = (string.IsNullOrEmpty(extension) ? "Undefined" : extension);
                     }
 
                     CreateDirectoryIfNotExists(Path.Combine(pathSave, folderType));

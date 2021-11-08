@@ -2,6 +2,7 @@
 using Core.Common;
 using Core.Configuration;
 using Core.Web.Entities;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Options;
 using SPNewsData.Application.Entities.DTOs;
 using SPNewsData.Application.Services.Interfaces;
@@ -10,6 +11,7 @@ using SPNewsData.Domain.Enums;
 using SPNewsData.Domain.Interfaces;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Net.Http;
 using System.Threading.Tasks;
@@ -25,10 +27,13 @@ namespace SPNewsData.Application.Services.Implementations
         private readonly IGovNewsRepository _govNewsRepository;
         private readonly ISubjectRepository _subjectRepository;
         private readonly IEvidenceRepository _evidenceRepository;
+        private readonly IHostingEnvironment _hostingEnvironment;
+
+        private const string _folderSaveEvidences = "Files\\{0}\\html";
 
         public ParseService(HttpClient client, IMapper mapper,
                             IUrlExtractedRepository extractedRepository, IOptions<Configs> options,
-                             IGovNewsRepository govNewsRepository, ISubjectRepository subjectRepository, IEvidenceRepository evidenceRepository)
+                             IGovNewsRepository govNewsRepository, ISubjectRepository subjectRepository, IEvidenceRepository evidenceRepository, IHostingEnvironment hostingEnvironment)
         {
             _client = client;
             _mapper = mapper;
@@ -37,6 +42,7 @@ namespace SPNewsData.Application.Services.Implementations
             _govNewsRepository = govNewsRepository;
             _subjectRepository = subjectRepository;
             _evidenceRepository = evidenceRepository;
+            _hostingEnvironment = hostingEnvironment;
         }
 
         public async Task<List<GovNewsDTO>> ParserUrlToGovNews(string search)
@@ -61,16 +67,23 @@ namespace SPNewsData.Application.Services.Implementations
         private async Task<GovNewsDTO> ExtractGeneralInfo(HtmlString html, string url, string search)
         {
             GovNewsDTO govNews = await ExtractGovNewInformation(html, url, search);
-            govNews.Evidences.AddIfNotNull(await SaveEvidences(html, govNews.Id));
+            govNews.Evidences.AddIfNotNull(await SaveEvidences(html, govNews.Id, search));
             govNews.Subjects.AddRangeIfNotNullOrEmpty(await ExtractSubjectsInformation(html, govNews.Id));
             return govNews;
         }
 
-        private async Task<EvidenceDTO> SaveEvidences(HtmlString html, int? govNewId)
+        private async Task<EvidenceDTO> SaveEvidences(HtmlString html, int? govNewId, string search)
         {
-            Evidence evidence = new(html.ToHtmlString, EvidenceType.HTML, govNewId);
-            var evidenceInserted = await _evidenceRepository.InsertAsync(evidence);
-            return _mapper.Map<EvidenceDTO>(evidenceInserted);
+            EvidenceDTO evidenceDto = new();
+            string fullPath = string.Format(_folderSaveEvidences, search);
+
+            if (html.SaveHtml(Path.Combine(_hostingEnvironment.WebRootPath, fullPath)))
+            {
+                Evidence evidence = new(html.FileNameGuid, EvidenceType.HTML, govNewId);
+                var evidenceInserted = await _evidenceRepository.InsertAsync(evidence);
+                evidenceDto = _mapper.Map<EvidenceDTO>(evidenceInserted);
+            }
+            return evidenceDto;
         }
 
         private async Task<GovNewsDTO> ExtractGovNewInformation(HtmlString html, string url, string search)
