@@ -8,15 +8,18 @@
 
         public string Search { get; private set; }
 
+        public bool ParsingLayout { get; private set; }
+
         public UrlExtracted()
         {
         }
 
-        public UrlExtracted(string title, string url, string search)
+        public UrlExtracted(string title, string url, string search, bool parsingLayout)
         {
             Title = title;
             Url = url;
             Search = search;
+            ParsingLayout = parsingLayout;
         }
     }
 }

@@ -27,6 +27,7 @@
 
   <ItemGroup>
     <Folder Include="wwwroot\Files\html\" />
+    <Folder Include="wwwroot\Files\TODOS\" />
   </ItemGroup>
 
   <ProjectExtensions><VisualStudio><UserProperties appsettings_1json__JsonSchema="" /></VisualStudio></ProjectExtensions>

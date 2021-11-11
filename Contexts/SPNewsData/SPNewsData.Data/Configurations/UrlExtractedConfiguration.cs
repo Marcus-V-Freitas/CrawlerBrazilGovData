@@ -9,6 +9,9 @@ namespace SPNewsData.Data.Configurations
         public void Configure(EntityTypeBuilder<UrlExtracted> builder)
         {
             builder.HasKey(x => x.Id);
+
+            builder.Property(x => x.ParsingLayout)
+                   .HasDefaultValue(false);
         }
     }
 }

@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Threading.Tasks;
 
 namespace Core.Web.Entities
 {
@@ -157,6 +158,14 @@ namespace Core.Web.Entities
             folder.CreateDirectoryIfNotExists();
             string fullPath = @$"{folder}\\{FileNameGuid}";
             File.WriteAllText(fullPath, _html);
+            return File.Exists(fullPath);
+        }
+
+        public async Task<bool> SaveHtmlAsync(string folder)
+        {
+            folder.CreateDirectoryIfNotExists();
+            string fullPath = @$"{folder}\\{FileNameGuid}";
+            await File.WriteAllTextAsync(fullPath, _html);
             return File.Exists(fullPath);
         }
     }

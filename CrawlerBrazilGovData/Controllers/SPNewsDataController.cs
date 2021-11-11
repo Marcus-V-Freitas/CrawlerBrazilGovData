@@ -17,14 +17,16 @@ namespace CrawlerBrazilGovData.Controllers
     public class SPNewsDataController : ControllerBase
     {
         private readonly IExtractUrlsService _extractUrlsService;
+        private readonly IExtractBatchUrlsService _extractBatchUrlsService;
         private readonly IParserService _parserService;
         private readonly ILogger<SPNewsDataController> _logger;
 
-        public SPNewsDataController(IExtractUrlsService extractUrlsService, ILogger<SPNewsDataController> logger, IParserService parserService)
+        public SPNewsDataController(IExtractUrlsService extractUrlsService, ILogger<SPNewsDataController> logger, IParserService parserService, IExtractBatchUrlsService extractBatchUrlsService)
         {
             _extractUrlsService = extractUrlsService;
             _logger = logger;
             _parserService = parserService;
+            _extractBatchUrlsService = extractBatchUrlsService;
         }
 
         /// <summary>
@@ -49,6 +51,31 @@ namespace CrawlerBrazilGovData.Controllers
             }
 
             _logger.LogTrace($"[RESPONSE] - Method: {nameof(NewsExtractUrlsBySearch)} - Count: {results.Count} - Query: {search}");
+
+            return Ok(results);
+        }
+
+        /// <summary>
+        /// Extract all url by search term
+        /// </summary>
+        /// <returns> Array Urls Found </returns>
+        [HttpPost("BatchBootstrap", Name = nameof(BatchNewsExtractUrlsBySearch))]
+        [SwaggerResponse((int)HttpStatusCode.OK, Description = "Returns 200", Type = typeof(IEnumerable<UrlExtractedDTO>))]
+        [SwaggerResponse((int)HttpStatusCode.NotFound, Description = "Missing Urls objects")]
+        [SwaggerResponse((int)HttpStatusCode.InternalServerError, Description = "Unexpected error")]
+        public async Task<IActionResult> BatchNewsExtractUrlsBySearch()
+        {
+            _logger.LogDebug($"[GET] - Method: {nameof(BatchNewsExtractUrlsBySearch)}");
+
+            var results = await _extractBatchUrlsService.ExtractUrlsBySearch();
+
+            if (results == null)
+            {
+                _logger.LogTrace($"[RESPONSE] - Method: {nameof(BatchNewsExtractUrlsBySearch)} - NOT FOUND");
+                return NotFound("No data was found with the current keyword!");
+            }
+
+            _logger.LogTrace($"[RESPONSE] - Method: {nameof(BatchNewsExtractUrlsBySearch)} - Count: {results.Count}");
 
             return Ok(results);
         }

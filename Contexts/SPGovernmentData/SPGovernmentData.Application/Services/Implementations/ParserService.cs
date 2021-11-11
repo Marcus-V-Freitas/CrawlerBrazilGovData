@@ -228,7 +228,7 @@ namespace SPGovernmentData.Application.Services.Implementations
 
             if (_parser.GetUrlsMysql)
             {
-                var extractUrls = await _extractedRepository.FindAllAsync(x => x.Search.ToUpper().Contains(search));
+                var extractUrls = await _extractedRepository.FindAllAsync(x => x.Search.ToUpper().Contains(search.ToUpper()));
                 extractUrlsDTO = _mapper.Map<List<UrlExtractedDTO>>(extractUrls);
             }
             return extractUrlsDTO;

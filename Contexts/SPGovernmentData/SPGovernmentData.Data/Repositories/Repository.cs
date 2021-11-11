@@ -114,5 +114,12 @@ namespace SPGovernmentData.Data.Repositories
         {
             return await _context.SaveChangesAsync() > 0;
         }
+
+        public async Task<List<T>> BulkInsertAsync(List<T> models)
+        {
+            _model.AddRange(models);
+            await SaveAsync();
+            return models;
+        }
     }
 }

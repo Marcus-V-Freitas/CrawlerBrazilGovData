@@ -40,6 +40,7 @@ namespace IoC.DependencyInjection.SPNewsDataDependencies
 
             //Services
             services.AddScoped<IExtractUrlsService, ExtractUrlsService>();
+            services.AddScoped<IExtractBatchUrlsService, ExtractBatchUrlsService>();
             services.AddScoped<IParserService, ParseService>();
 
             return services;

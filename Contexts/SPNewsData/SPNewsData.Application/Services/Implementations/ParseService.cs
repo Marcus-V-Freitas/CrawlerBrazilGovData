@@ -20,73 +20,86 @@ namespace SPNewsData.Application.Services.Implementations
 {
     public class ParseService : IParserService
     {
-        private readonly Parser _parser;
+        private readonly Configs _configs;
         private readonly HttpClient _client;
         private readonly IMapper _mapper;
         private readonly IUrlExtractedRepository _extractedRepository;
         private readonly IGovNewsRepository _govNewsRepository;
-        private readonly ISubjectRepository _subjectRepository;
-        private readonly IEvidenceRepository _evidenceRepository;
         private readonly IHostingEnvironment _hostingEnvironment;
 
         private const string _folderSaveEvidences = "Files\\{0}\\html";
 
         public ParseService(HttpClient client, IMapper mapper,
                             IUrlExtractedRepository extractedRepository, IOptions<Configs> options,
-                             IGovNewsRepository govNewsRepository, ISubjectRepository subjectRepository, IEvidenceRepository evidenceRepository, IHostingEnvironment hostingEnvironment)
+                            IGovNewsRepository govNewsRepository, IHostingEnvironment hostingEnvironment)
         {
             _client = client;
             _mapper = mapper;
             _extractedRepository = extractedRepository;
-            _parser = options.Value.SPNewsData.Parser;
+            _configs = options.Value;
             _govNewsRepository = govNewsRepository;
-            _subjectRepository = subjectRepository;
-            _evidenceRepository = evidenceRepository;
             _hostingEnvironment = hostingEnvironment;
         }
 
         public async Task<List<GovNewsDTO>> ParserUrlToGovNews(string search)
         {
-            List<GovNewsDTO> govNewsDTOs = new();
+            List<GovNews> govNews = new();
             List<UrlExtractedDTO> urls = await GetUrlsParser(search);
 
             if (!urls.ListIsNullOrEmpty())
             {
-                foreach (UrlExtractedDTO url in urls)
+                await urls.ParallelForEachAsync(async (url) =>
                 {
                     HtmlString html = await _client.GetResponseHtmlAsync(url.Url);
                     if (!html.IsNullOrEmpty)
                     {
-                        govNewsDTOs.AddIfNotNull(await ExtractGeneralInfo(html, url.Url, search));
+                        govNews.AddIfNotNull(await ExtractGeneralInfo(html, url.Url, search));
                     }
-                }
+                }, _configs.MaxDegreeOfParallelism);
             }
-            return govNewsDTOs;
+            return await SaveGovNewsInMysql(govNews);
         }
 
-        private async Task<GovNewsDTO> ExtractGeneralInfo(HtmlString html, string url, string search)
+        private async Task<List<GovNewsDTO>> SaveGovNewsInMysql(List<GovNews> govNews)
         {
-            GovNewsDTO govNews = await ExtractGovNewInformation(html, url, search);
+            List<GovNewsDTO> govNewsDTO = new();
+            int page = 1;
+            int pagination = 1000;
+
+            while (true)
+            {
+                var govNewsPagination = govNews.Skip((page - 1) * pagination).Take(pagination).ToList();
+
+                if (govNewsPagination.ListIsNullOrEmpty())
+                    break;
+
+                var govNewsInserted = await _govNewsRepository.BulkInsertAsync(govNewsPagination);
+                govNewsDTO.AddRangeIfNotNullOrEmpty(_mapper.Map<List<GovNewsDTO>>(govNewsInserted));
+            }
+            return govNewsDTO;
+        }
+
+        private async Task<GovNews> ExtractGeneralInfo(HtmlString html, string url, string search)
+        {
+            GovNews govNews = ExtractGovNewInformation(html, url, search);
             govNews.Evidences.AddIfNotNull(await SaveEvidences(html, govNews.Id, search));
-            govNews.Subjects.AddRangeIfNotNullOrEmpty(await ExtractSubjectsInformation(html, govNews.Id));
+            govNews.Subjects.AddRangeIfNotNullOrEmpty(ExtractSubjectsInformation(html, govNews.Id));
             return govNews;
         }
 
-        private async Task<EvidenceDTO> SaveEvidences(HtmlString html, int? govNewId, string search)
+        private async Task<Evidence> SaveEvidences(HtmlString html, int? govNewId, string search)
         {
-            EvidenceDTO evidenceDto = new();
+            Evidence evidence = new();
             string fullPath = string.Format(_folderSaveEvidences, search);
 
-            if (html.SaveHtml(Path.Combine(_hostingEnvironment.WebRootPath, fullPath)))
+            if (await html.SaveHtmlAsync(Path.Combine(_hostingEnvironment.WebRootPath, fullPath)))
             {
-                Evidence evidence = new(html.FileNameGuid, EvidenceType.HTML, govNewId);
-                var evidenceInserted = await _evidenceRepository.InsertAsync(evidence);
-                evidenceDto = _mapper.Map<EvidenceDTO>(evidenceInserted);
+                evidence = new(html.FileNameGuid, EvidenceType.HTML, govNewId);
             }
-            return evidenceDto;
+            return evidence;
         }
 
-        private async Task<GovNewsDTO> ExtractGovNewInformation(HtmlString html, string url, string search)
+        private GovNews ExtractGovNewInformation(HtmlString html, string url, string search)
         {
             string title = html.ExtractSingleInfo(".//header[@class='article-header']/h1[@class='title']");
             string subtitle = html.ExtractSingleInfo(".//section/header[@class='article-header']/p");
@@ -95,7 +108,7 @@ namespace SPNewsData.Application.Services.Implementations
             DateTime? publicationDate = null;
             string source = null;
 
-            if (infos != null && infos.Count() == 2)
+            if (infos != null && infos.Length == 2)
             {
                 string date = infos[0].TryRemoveTextBeforeValue(" ").Replace("H", ":");
                 publicationDate = date.TryConvertDatetime("d/MM/yyyy - H:mm");
@@ -103,15 +116,12 @@ namespace SPNewsData.Application.Services.Implementations
             }
 
             GovNews govNews = new(title, subtitle, publicationDate, source, content, url, search);
-            var govNewInserted = await _govNewsRepository.InsertAsync(govNews);
-            GovNewsDTO govNewsDTO = _mapper.Map<GovNewsDTO>(govNewInserted);
-
-            return govNewsDTO;
+            return govNews;
         }
 
-        private async Task<List<SubjectDTO>> ExtractSubjectsInformation(HtmlString html, int? govNewId)
+        private List<Subject> ExtractSubjectsInformation(HtmlString html, int? govNewId)
         {
-            List<SubjectDTO> subjectDTOs = new();
+            List<Subject> subjects = new();
             List<string> names = html.ExtractListInfo(".//section/footer/div[@class='categories']/a[@class='category']");
 
             if (!names.ListIsNullOrEmpty())
@@ -119,20 +129,20 @@ namespace SPNewsData.Application.Services.Implementations
                 foreach (var name in names)
                 {
                     Subject subject = new(name, govNewId);
-                    var subjectInserted = await _subjectRepository.InsertAsync(subject);
-                    subjectDTOs.AddIfNotNull(_mapper.Map<SubjectDTO>(subjectInserted));
+                    subjects.AddIfNotNull(subject);
                 }
             }
-            return subjectDTOs;
+            return subjects;
         }
 
         private async Task<List<UrlExtractedDTO>> GetUrlsBySearchFromMysql(string search)
         {
             List<UrlExtractedDTO> extractUrlsDTO = new();
 
-            if (_parser.GetUrlsMysql)
+            if (_configs.SPNewsData.Parser.GetUrlsMysql)
             {
-                var extractUrls = await _extractedRepository.FindAllAsync(x => x.Search.ToUpper().Contains(search));
+                var extractUrls = await _extractedRepository.FindAllAsync(x => x.Search.ToUpper().Contains(search.ToUpper())
+                                                                            && x.ParsingLayout);
                 extractUrlsDTO = _mapper.Map<List<UrlExtractedDTO>>(extractUrls);
             }
             return extractUrlsDTO;

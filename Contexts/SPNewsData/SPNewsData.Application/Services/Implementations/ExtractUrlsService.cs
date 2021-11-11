@@ -82,7 +82,11 @@ namespace SPNewsData.Application.Services.Implementations
 
             foreach (var urlNode in urlNodes)
             {
-                var urlExtracted = new UrlExtracted(urlNode.InnerText, urlNode.Attributes["href"].Value, search);
+                string title = urlNode.InnerText;
+                string url = urlNode.Attributes["href"].Value;
+                bool parsingLayout = !string.IsNullOrEmpty(title);
+
+                var urlExtracted = new UrlExtracted(title, url, search, parsingLayout);
                 var urlExtractedInserted = await SaveMysql(search, urlExtracted);
 
                 if (urlExtractedInserted != null)

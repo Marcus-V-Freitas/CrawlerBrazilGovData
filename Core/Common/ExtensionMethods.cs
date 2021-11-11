@@ -8,6 +8,7 @@ using System.IO;
 using System.Linq;
 using System.Net.Http;
 using System.Text.RegularExpressions;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace Core.Common
@@ -54,6 +55,29 @@ namespace Core.Common
                 Console.WriteLine(ex.Message);
                 return HtmlString.Instance();
             }
+        }
+
+        public static async Task ParallelForEachAsync<T>(this IEnumerable<T> source, Func<T, Task> asyncAction, int maxDegreeOfParallelism)
+        {
+            var throttler = new SemaphoreSlim(initialCount: maxDegreeOfParallelism);
+            var tasks = source.Select(async item =>
+            {
+                await throttler.WaitAsync();
+                try
+                {
+                    await asyncAction(item).ConfigureAwait(false);
+                }
+                finally
+                {
+                    throttler.Release();
+                }
+            });
+            await Task.WhenAll(tasks);
+        }
+
+        public static bool ContainsInsensitive(this string source, string search)
+        {
+            return source.ToUpper().Contains(search.ToUpper());
         }
 
         public static void AddRangeIfNotNullOrEmpty<T>(this List<T> source, IEnumerable<T> collection)

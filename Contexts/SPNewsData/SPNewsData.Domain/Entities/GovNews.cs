@@ -21,6 +21,8 @@ namespace SPNewsData.Domain.Entities
 
         public GovNews()
         {
+            Evidences = new();
+            Subjects  = new();
         }
 
         public GovNews(string title, string subtitle, DateTime? publicationDate,
@@ -33,6 +35,8 @@ namespace SPNewsData.Domain.Entities
             Content = content;
             Url = url;
             Search = search;
+            Evidences = new();
+            Subjects = new();
         }
     }
 }
