@@ -8,7 +8,7 @@
       * [Datasets da Prefeitura de São Paulo](http://dados.prefeitura.sp.gov.br/)
       * [Notícias do Estado de São Paulo](https://www.saopaulo.sp.gov.br)
   * [x] Projeto feito em .NET 5;
-  * [x] Arquitetura DDD;
+  * [x] Onion Architecture [Medium](https://medium.com/@shivendraodean/software-architecture-the-onion-architecture-1b235bec1dec);
   * [x] AutoMapper (DTO's e entidades de Domínio);
   * [x] Swagger (Documentação em toda API);
   * [x] Helpers para salvar dados em Filas SQS AWS;
@@ -23,7 +23,8 @@
   * [x] Health Check das bases de dados;
   * [x] Injeção de Dependência;
   * [x] Separação de projetos em contextos; 
-  * [x] Homologação dos dados via evidências de arquivos. 
+  * [x] Homologação dos dados via evidências de arquivos salvos. 
+  * [x] Implementações com Programação Paralela 
 
 ## Tecnologias Utilizadas
 
